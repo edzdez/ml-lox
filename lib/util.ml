@@ -26,8 +26,7 @@ let do_interpret ast =
   let env = ref (Map.empty (module String)) in
   try
     List.iter ast ~f:(fun decl ->
-        let v, env' = Interpreter.execute_declaration !env decl in
-        print_s (Interpreter.sexp_of_value v);
+        let _, env' = Interpreter.execute_declaration !env decl in
         env := env')
   with Interpreter.EvalError (pos, msg) ->
     fprintf stderr "%a: %s\n%!" print_position pos msg

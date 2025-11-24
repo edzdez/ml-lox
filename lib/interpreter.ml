@@ -25,6 +25,16 @@ let are_equal v1 v2 =
   | Nil, Nil -> true
   | _ -> false
 
+let stringify v =
+  match v with
+  | Bool b -> Bool.to_string b
+  | String s -> s
+  | Number n ->
+      let s = Float.to_string n in
+      if String.is_suffix s ~suffix:"." then String.drop_suffix s 1 else s
+  | Object o -> "ref#" ^ Sexp.to_string (sexp_of_lox_object !o)
+  | Nil -> "nil"
+
 let rec eval_atom_expr env (expr : Ast.atom_expr) =
   match expr with
   | Ast.Bool_expr b -> (Bool b, env)
@@ -119,7 +129,10 @@ and execute_statement env (t : Ast.statement) =
   | Ast.Expr_stmt e -> eval_expr env e
   | Ast.For_stmt _ -> assert false
   | Ast.If_stmt _ -> assert false
-  | Ast.Print_stmt _ -> assert false
+  | Ast.Print_stmt e ->
+      let v, env' = eval_expr env e in
+      printf "%s\n%!" @@ stringify v;
+      (v, env')
   | Ast.Return_stmt _ -> assert false
   | Ast.While_stmt _ -> assert false
   | Ast.Block_stmt _ -> assert false
