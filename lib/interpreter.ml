@@ -35,6 +35,22 @@ let stringify v =
   | Object o -> "ref#" ^ Sexp.to_string (sexp_of_lox_object !o)
   | Nil -> "nil"
 
+let assign_at env ({ primary; calls } : Ast.call_expr) v =
+  match calls with
+  | [] -> (
+      match primary with
+      | Var_expr (name, pos) ->
+          let env' =
+            Map.update env name ~f:(function
+              | None ->
+                  raise (EvalError (pos, "Undefined variable '" ^ name ^ "'."))
+              | Some _ -> v)
+          in
+          (v, env')
+      (* semant should rule this case out *)
+      | _ -> assert false)
+  | _ -> assert false
+
 let rec eval_atom_expr env (expr : Ast.atom_expr) =
   match expr with
   | Ast.Bool_expr b -> (Bool b, env)
@@ -51,7 +67,10 @@ let rec eval_atom_expr env (expr : Ast.atom_expr) =
 
 and eval_expr env (expr : Ast.expr) =
   match expr with
-  | Ast.Assign_expr (_, _) -> assert false
+  | Ast.Assign_expr ({ lhs; rhs }, _) ->
+      let rhs, env' = eval_expr env rhs in
+      let rhs, env'' = assign_at env' lhs rhs in
+      (rhs, env'')
   | Ast.Or_expr (_e1, _e2, _pos) -> assert false
   | Ast.And_expr (_e1, _e2, _pos) -> assert false
   | Ast.Eq_expr (e1, e2, _) ->

@@ -113,9 +113,28 @@ let%expect_test "allows redefinition of global variables" =
   interpret lexbuf;
   [%expect {| 25 |}]
 
-let%expect_test "runtime error on undefined variable" =
+let%expect_test "runtime error on use of undefined variable" =
   let lexbuf = Lexing.from_string {|
     print a;
     |} in
   interpret lexbuf;
   [%expect {| :2:11: Undefined variable 'a'. |}]
+
+let%expect_test "assignment to global variables" =
+  let lexbuf =
+    Lexing.from_string {|
+    var a;
+    a = 10;
+    print a;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| 10 |}]
+
+let%expect_test "runtime error when assigning to undefined variable" =
+  let lexbuf = Lexing.from_string {|
+    a = 10;
+    print a;
+    |} in
+  interpret lexbuf;
+  [%expect {| :2:5: Undefined variable 'a'. |}]
