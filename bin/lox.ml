@@ -15,14 +15,23 @@ let parse_with_error lexbuf =
       fprintf stderr "%a: Parse error\n%!" print_position lexbuf;
       []
 
-let repl () = ()
+let rec repl () =
+  eprintf "lox:> %!";
+  match In_channel.input_line In_channel.stdin with
+  | None -> ()
+  | Some line ->
+      let lexbuf = Lexing.from_string line in
+      lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "-" };
+      let ast = parse_with_error lexbuf in
+      List.iter ast ~f:(Ast.print ~outx:Out_channel.stderr);
+      repl ()
 
 let run_file ~filename () =
   In_channel.with_file filename ~f:(fun f ->
       let lexbuf = Lexing.from_channel f in
       lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
       let ast = parse_with_error lexbuf in
-      List.iter ast ~f:Ast.print)
+      List.iter ast ~f:(Ast.print ~outx:Out_channel.stderr))
 
 let dispatch ~filename =
   match filename with "-" -> repl | _ -> run_file ~filename

@@ -76,4 +76,5 @@ and statement =
   | Block_stmt of declaration list
 [@@deriving sexp]
 
-let print t = print_s (sexp_of_declaration t)
+let print ~outx t =
+  fprintf outx "%s\n%!" (Sexp.to_string @@ sexp_of_declaration t)
