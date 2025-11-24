@@ -157,7 +157,12 @@ and execute_statement env (t : Ast.statement) =
       (v, env')
   | Ast.Return_stmt _ -> assert false
   | Ast.While_stmt _ -> assert false
-  | Ast.Block_stmt _ -> assert false
+  | Ast.Block_stmt ss ->
+      let inner_env = ref env in
+      List.iter ss ~f:(fun decl ->
+          let _, inner_env' = execute_declaration !inner_env decl in
+          inner_env := inner_env');
+      (Nil, env)
 
 and execute_declaration env (t : Ast.declaration) =
   match t with

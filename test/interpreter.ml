@@ -138,3 +138,41 @@ let%expect_test "runtime error when assigning to undefined variable" =
     |} in
   interpret lexbuf;
   [%expect {| :2:5: Undefined variable 'a'. |}]
+
+let%expect_test "block scoping" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      var a = "global a";
+      var b = "global b";
+      var c = "global c";
+      {
+        var a = "outer a";
+        var b = "outer b";
+        {
+          var a = "inner a";
+          print a;
+          print b;
+          print c;
+        }
+        print a;
+        print b;
+        print c;
+      }
+      print a;
+      print b;
+      print c;
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    inner a
+    outer b
+    global c
+    outer a
+    outer b
+    global c
+    global a
+    global b
+    global c
+    |}]
