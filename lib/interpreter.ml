@@ -150,11 +150,17 @@ and execute_statement env (t : Ast.statement) =
   match t with
   | Ast.Expr_stmt e -> eval_expr env e
   | Ast.For_stmt _ -> assert false
-  | Ast.If_stmt _ -> assert false
+  | Ast.If_stmt { cond; consequent; alternative } -> (
+      let v, env' = eval_expr env cond in
+      if is_truthy v then execute_statement env' consequent
+      else
+        match alternative with
+        | None -> (Nil, env')
+        | Some alternative -> execute_statement env' alternative)
   | Ast.Print_stmt e ->
       let v, env' = eval_expr env e in
       printf "%s\n%!" @@ stringify v;
-      (v, env')
+      (Nil, env')
   | Ast.Return_stmt _ -> assert false
   | Ast.While_stmt _ -> assert false
   | Ast.Block_stmt ss ->

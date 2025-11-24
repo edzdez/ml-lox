@@ -8,12 +8,12 @@ let%expect_test "works with basic arithmetic expressions" =
   let lexbuf =
     Lexing.from_string
       {|
-        print 1 + 2;
-        print "Hello, " + "world!";
-        print 10 / 3;
-        print 6 - 4;
-        print 4 * 1;
-    |}
+      print 1 + 2;
+      print "Hello, " + "world!";
+      print 10 / 3;
+      print 6 - 4;
+      print 4 * 1;
+      |}
   in
   interpret lexbuf;
   [%expect {|
@@ -28,25 +28,25 @@ let%expect_test "works with basic comparison expressions" =
   let lexbuf =
     Lexing.from_string
       {|
-        print 1 < 2;
-        print 2 < 2;
-        print 2 <= 2;
-        print 3 <= 2;
-        print 1 > 2;
-        print 2 > 2;
-        print 2 >= 2;
-        print 3 >= 2;
-        print nil == nil;
-        print 5 == 4;
-        print "hi" == "hi";
-        print "hi" == "bye";
-        print 5 == true;
-        print nil != nil;
-        print 5 != 4;
-        print "hi" != "hi";
-        print "hi" != "bye";
-        print 5 != true;
-    |}
+      print 1 < 2;
+      print 2 < 2;
+      print 2 <= 2;
+      print 3 <= 2;
+      print 1 > 2;
+      print 2 > 2;
+      print 2 >= 2;
+      print 3 >= 2;
+      print nil == nil;
+      print 5 == 4;
+      print "hi" == "hi";
+      print "hi" == "bye";
+      print 5 == true;
+      print nil != nil;
+      print 5 != 4;
+      print "hi" != "hi";
+      print "hi" != "bye";
+      print 5 != true;
+      |}
   in
   interpret lexbuf;
   [%expect
@@ -165,7 +165,8 @@ let%expect_test "block scoping" =
       |}
   in
   interpret lexbuf;
-  [%expect {|
+  [%expect
+    {|
     inner a
     outer b
     global c
@@ -175,4 +176,18 @@ let%expect_test "block scoping" =
     global a
     global b
     global c
+    |}]
+
+let%expect_test "if then else" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      if (true) if (false) print "no!"; else print "yes!";
+      print "all done!";
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    yes!
+    all done!
     |}]
