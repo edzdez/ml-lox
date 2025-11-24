@@ -1,0 +1,7 @@
+(library
+ (name lox_test)
+ (libraries core lox)
+ (preprocess
+  (pps ppx_jane))
+ (inline_tests
+  (deps (source_tree ../test_programs))))

@@ -63,6 +63,7 @@ and consume_comment =
   parse
   | newline         { Lexing.new_line lexbuf; read lexbuf }
   | _               { consume_comment lexbuf }
+  | eof             { EOF }
 and read_string buf =
   parse
   | '"'             { STRING (Buffer.contents buf) }
