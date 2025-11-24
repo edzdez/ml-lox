@@ -1,5 +1,9 @@
 open! Core
 
+type position = string * int * int
+
+let sexp_of_position _ = Sexp.Atom "pos"
+
 type assign_expr = {
   (* this should really be an LValue. *)
   lhs : call_expr;
@@ -18,10 +22,11 @@ and atom_expr =
   | Var_expr of string
   | Super_expr of string
   | Expr_expr of expr
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 and expr =
-  | Assign_expr of assign_expr
+  (* assign seems to be the only node we need to augment for semant... *)
+  | Assign_expr of assign_expr * position
   | Or_expr of expr * expr
   | And_expr of expr * expr
   | Eq_expr of expr * expr
@@ -37,7 +42,7 @@ and expr =
   | Neg_expr of expr
   | Minus_expr of expr
   | Call_expr of call_expr
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 type class_decl = { name : string; parent : string option; body : func list }
 and var_decl = { name : string; init : expr option }
@@ -74,7 +79,7 @@ and statement =
   | Return_stmt of expr option
   | While_stmt of while_stmt
   | Block_stmt of declaration list
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 let print ~outx t =
   fprintf outx "%s\n%!" (Sexp.to_string @@ sexp_of_declaration t)

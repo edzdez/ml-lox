@@ -31,7 +31,7 @@ let%expect_test "assignment is right associative" =
   let lexbuf = Lexing.from_string "a = b = c;" in
   List.iter ~f:(Lox.Ast.print ~outx:stdout) @@ parse_with_error lexbuf;
   [%expect
-    {| (Stmt_decl(Expr_stmt(Assign_expr((lhs((primary(Var_expr a))(calls())))(rhs(Assign_expr((lhs((primary(Var_expr b))(calls())))(rhs(Call_expr((primary(Var_expr c))(calls()))))))))))) |}]
+    {| (Stmt_decl(Expr_stmt(Assign_expr((lhs((primary(Var_expr a))(calls())))(rhs(Assign_expr((lhs((primary(Var_expr b))(calls())))(rhs(Call_expr((primary(Var_expr c))(calls())))))pos)))pos))) |}]
 
 let%expect_test "allows the empty class" =
   let lexbuf = Lexing.from_string "class Foo {}" in
@@ -65,7 +65,7 @@ let%expect_test "for loops behave" =
     (Stmt_decl(For_stmt((init None)(cond((Lt_expr(Call_expr((primary(Var_expr i))(calls())))(Call_expr((primary(Number_expr 0))(calls()))))))(step())(body(Block_stmt())))))
     (Stmt_decl(For_stmt((init None)(cond())(step((Add_expr(Call_expr((primary(Var_expr i))(calls())))(Call_expr((primary(Number_expr 10))(calls()))))))(body(Block_stmt())))))
     (Stmt_decl(For_stmt((init None)(cond())(step((Add_expr(Call_expr((primary(Var_expr i))(calls())))(Call_expr((primary(Number_expr 10))(calls()))))))(body(Block_stmt())))))
-    (Stmt_decl(For_stmt((init(Decl((name i)(init((Call_expr((primary(Number_expr 0))(calls()))))))))(cond((Lt_expr(Call_expr((primary(Var_expr i))(calls())))(Call_expr((primary(Number_expr 10))(calls()))))))(step((Assign_expr((lhs((primary(Var_expr i))(calls())))(rhs(Add_expr(Call_expr((primary(Var_expr i))(calls())))(Call_expr((primary(Number_expr 1))(calls())))))))))(body(Block_stmt((Stmt_decl(Print_stmt(Call_expr((primary(Expr_expr(Call_expr((primary(Var_expr i))(calls())))))(calls())))))))))))
+    (Stmt_decl(For_stmt((init(Decl((name i)(init((Call_expr((primary(Number_expr 0))(calls()))))))))(cond((Lt_expr(Call_expr((primary(Var_expr i))(calls())))(Call_expr((primary(Number_expr 10))(calls()))))))(step((Assign_expr((lhs((primary(Var_expr i))(calls())))(rhs(Add_expr(Call_expr((primary(Var_expr i))(calls())))(Call_expr((primary(Number_expr 1))(calls()))))))pos)))(body(Block_stmt((Stmt_decl(Print_stmt(Call_expr((primary(Expr_expr(Call_expr((primary(Var_expr i))(calls())))))(calls())))))))))))
     |}]
 
 let%expect_test "funky calls" =
@@ -93,7 +93,8 @@ let%expect_test "dangling else" =
   In_channel.with_file "../test_programs/if/dangling_else.lox" ~f:(fun f ->
       let lexbuf = Lexing.from_channel f in
       List.iter ~f:(Lox.Ast.print ~outx:stdout) @@ parse_with_error lexbuf);
-  [%expect {|
+  [%expect
+    {|
     (Stmt_decl(If_stmt((cond(Call_expr((primary(Bool_expr true))(calls()))))(consequent(If_stmt((cond(Call_expr((primary(Bool_expr false))(calls()))))(consequent(Print_stmt(Call_expr((primary(String_expr bad))(calls())))))(alternative((Print_stmt(Call_expr((primary(String_expr good))(calls())))))))))(alternative()))))
     (Stmt_decl(If_stmt((cond(Call_expr((primary(Bool_expr false))(calls()))))(consequent(If_stmt((cond(Call_expr((primary(Bool_expr true))(calls()))))(consequent(Print_stmt(Call_expr((primary(String_expr bad))(calls())))))(alternative((Print_stmt(Call_expr((primary(String_expr bad))(calls())))))))))(alternative()))))
     |}]

@@ -1,4 +1,7 @@
-// TODO add messages when dune supports it.
+%{
+(* TODO: add error messages when dune supports menhir .message files *)
+%}
+
 %token <float> NUMBER
 %token <string> STRING
 %token <string> IDENTIFIER
@@ -191,7 +194,8 @@ expr:
 
 assignment:
   | lhs = call; ASSIGN; rhs = assignment
-    { Assign_expr {lhs; rhs} }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Assign_expr ({lhs; rhs}, (pos.pos_fname, pos.pos_lnum, pos.pos_cnum)) }
   | expr = logic_or
     { expr }
   ;
