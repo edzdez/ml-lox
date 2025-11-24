@@ -1,0 +1,952 @@
+program: TIMES
+##
+## Ends in an error in state: 0.
+##
+## program' -> . program [ # ]
+##
+## The known suffix of the stack is as follows:
+##
+##
+program: IF LEFT_PAREN FALSE RIGHT_PAREN LEFT_BRACE RIGHT_BRACE TIMES
+##
+## Ends in an error in state: 112.
+##
+## statement -> IF LEFT_PAREN expr RIGHT_PAREN statement . [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+## statement -> IF LEFT_PAREN expr RIGHT_PAREN statement . ELSE statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IF LEFT_PAREN expr RIGHT_PAREN statement
+##
+program: LEFT_BRACE LEFT_BRACE RIGHT_BRACE TIMES
+##
+## Ends in an error in state: 137.
+##
+## block_body -> declaration . block_body [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## declaration
+##
+program: LEFT_BRACE RIGHT_BRACE TIMES
+##
+## Ends in an error in state: 145.
+##
+## program -> declaration . program [ # ]
+##
+## The known suffix of the stack is as follows:
+## declaration
+##
+
+Expected <expr> before binary operator.
+
+program: WHILE WHILE
+##
+## Ends in an error in state: 1.
+##
+## statement -> WHILE . LEFT_PAREN expr RIGHT_PAREN statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## WHILE
+##
+
+Expected '(' after 'while'.
+
+program: WHILE LEFT_PAREN WHILE
+##
+## Ends in an error in state: 2.
+##
+## statement -> WHILE LEFT_PAREN . expr RIGHT_PAREN statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## WHILE LEFT_PAREN
+##
+program: IF LEFT_PAREN WHILE
+##
+## Ends in an error in state: 89.
+##
+## statement -> IF LEFT_PAREN . expr RIGHT_PAREN statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+## statement -> IF LEFT_PAREN . expr RIGHT_PAREN statement ELSE statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IF LEFT_PAREN
+##
+program: LEFT_PAREN WHILE
+##
+## Ends in an error in state: 12.
+##
+## primary -> LEFT_PAREN . expr RIGHT_PAREN [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ LEFT_PAREN GT GEQ EQ DOT DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## LEFT_PAREN
+##
+
+Expected <expr> after '('.
+
+program: SUPER WHILE
+##
+## Ends in an error in state: 5.
+##
+## primary -> SUPER . DOT IDENTIFIER [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ LEFT_PAREN GT GEQ EQ DOT DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## SUPER
+##
+
+Expected '.' after 'super'.
+
+program: SUPER DOT WHILE
+##
+## Ends in an error in state: 6.
+##
+## primary -> SUPER DOT . IDENTIFIER [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ LEFT_PAREN GT GEQ EQ DOT DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## SUPER DOT
+##
+program: FALSE DOT WHILE
+##
+## Ends in an error in state: 61.
+##
+## call_calls -> DOT . IDENTIFIER [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+## call_calls -> DOT . IDENTIFIER call_calls [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## DOT
+##
+
+Expected <identifier> after '.'.
+
+program: MINUS WHILE
+##
+## Ends in an error in state: 11.
+##
+## unary -> MINUS . unary [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## MINUS
+##
+program: BANG WHILE
+##
+## Ends in an error in state: 15.
+##
+## unary -> BANG . unary [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## BANG
+##
+
+Expected <expr> after unary operator.
+
+program: FALSE WHILE
+##
+## Ends in an error in state: 17.
+##
+## call -> primary . [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+## call -> primary . call_calls [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## primary
+##
+program: FALSE LEFT_PAREN RIGHT_PAREN WHILE
+##
+## Ends in an error in state: 60.
+##
+## call_calls -> LEFT_PAREN arguments . [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+## call_calls -> LEFT_PAREN arguments . call_calls [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## LEFT_PAREN arguments
+##
+program: FALSE DOT IDENTIFIER WHILE
+##
+## Ends in an error in state: 62.
+##
+## call_calls -> DOT IDENTIFIER . [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+## call_calls -> DOT IDENTIFIER . call_calls [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## DOT IDENTIFIER
+##
+program: VAR IDENTIFIER WHILE
+##
+## Ends in an error in state: 81.
+##
+## declaration -> VAR IDENTIFIER . var_init [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## VAR IDENTIFIER
+##
+program: FOR LEFT_PAREN VAR IDENTIFIER WHILE
+##
+## Ends in an error in state: 95.
+##
+## for_init -> VAR IDENTIFIER . var_init [ TRUE THIS SUPER STRING SEMICOLON NUMBER NIL MINUS LEFT_PAREN IDENTIFIER FALSE BANG ]
+##
+## The known suffix of the stack is as follows:
+## VAR IDENTIFIER
+##
+
+Unexpected end of <statement>. Did you forget a ';'?
+
+program: FALSE LEFT_PAREN WHILE
+##
+## Ends in an error in state: 18.
+##
+## call_calls -> LEFT_PAREN . arguments [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+## call_calls -> LEFT_PAREN . arguments call_calls [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## LEFT_PAREN
+##
+
+Expected <expr> or ')' after '('.
+
+program: MINUS FALSE ASSIGN
+##
+## Ends in an error in state: 20.
+##
+## factor -> unary . TIMES factor [ SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ COMMA AND ]
+## factor -> unary . DIVIDE factor [ SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ COMMA AND ]
+## factor -> unary . [ SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## unary
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 23, spurious reduction of production unary -> call
+## In state 68, spurious reduction of production unary -> MINUS unary
+##
+
+Expected lvalue before '='.
+
+program: FALSE TIMES WHILE
+##
+## Ends in an error in state: 21.
+##
+## factor -> unary TIMES . factor [ SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## unary TIMES
+##
+program: FALSE DIVIDE WHILE
+##
+## Ends in an error in state: 24.
+##
+## factor -> unary DIVIDE . factor [ SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ GT GEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## unary DIVIDE
+##
+program: FALSE LT WHILE
+##
+## Ends in an error in state: 27.
+##
+## comparison -> term LT . comparison [ SEMICOLON RIGHT_PAREN OR NEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## term LT
+##
+program: FALSE PLUS WHILE
+##
+## Ends in an error in state: 29.
+##
+## term -> factor PLUS . term [ SEMICOLON RIGHT_PAREN OR NEQ LT LEQ GT GEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## factor PLUS
+##
+program: FALSE MINUS WHILE
+##
+## Ends in an error in state: 31.
+##
+## term -> factor MINUS . term [ SEMICOLON RIGHT_PAREN OR NEQ LT LEQ GT GEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## factor MINUS
+##
+program: FALSE LEQ WHILE
+##
+## Ends in an error in state: 34.
+##
+## comparison -> term LEQ . comparison [ SEMICOLON RIGHT_PAREN OR NEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## term LEQ
+##
+program: FALSE GT WHILE
+##
+## Ends in an error in state: 36.
+##
+## comparison -> term GT . comparison [ SEMICOLON RIGHT_PAREN OR NEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## term GT
+##
+program: FALSE GEQ WHILE
+##
+## Ends in an error in state: 38.
+##
+## comparison -> term GEQ . comparison [ SEMICOLON RIGHT_PAREN OR NEQ EQ COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## term GEQ
+##
+program: FALSE OR WHILE
+##
+## Ends in an error in state: 42.
+##
+## logic_or -> logic_and OR . logic_or [ SEMICOLON RIGHT_PAREN COMMA ]
+##
+## The known suffix of the stack is as follows:
+## logic_and OR
+##
+program: FALSE AND WHILE
+##
+## Ends in an error in state: 45.
+##
+## logic_and -> equality AND . logic_and [ SEMICOLON RIGHT_PAREN OR COMMA ]
+##
+## The known suffix of the stack is as follows:
+## equality AND
+##
+program: FALSE NEQ WHILE
+##
+## Ends in an error in state: 48.
+##
+## equality -> comparison NEQ . equality [ SEMICOLON RIGHT_PAREN OR COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## comparison NEQ
+##
+program: FALSE EQ WHILE
+##
+## Ends in an error in state: 50.
+##
+## equality -> comparison EQ . equality [ SEMICOLON RIGHT_PAREN OR COMMA AND ]
+##
+## The known suffix of the stack is as follows:
+## comparison EQ
+##
+
+Expected <expr> after binary operator.
+
+program: FALSE LEFT_PAREN FALSE SEMICOLON
+##
+## Ends in an error in state: 52.
+##
+## arguments -> expr . RIGHT_PAREN [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ LEFT_PAREN GT GEQ EQ DOT DIVIDE COMMA ASSIGN AND ]
+## arguments -> expr . COMMA arguments [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ LEFT_PAREN GT GEQ EQ DOT DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+
+Expected ',' or ')' after <expr>.
+
+program: FALSE LEFT_PAREN FALSE COMMA WHILE
+##
+## Ends in an error in state: 54.
+##
+## arguments -> expr COMMA . arguments [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ LEFT_PAREN GT GEQ EQ DOT DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## expr COMMA
+##
+
+Expected <expr> after ','.
+
+program: FALSE ASSIGN WHILE
+##
+## Ends in an error in state: 56.
+##
+## assignment -> call ASSIGN . assignment [ SEMICOLON RIGHT_PAREN COMMA ]
+##
+## The known suffix of the stack is as follows:
+## call ASSIGN
+##
+program: VAR IDENTIFIER ASSIGN WHILE
+##
+## Ends in an error in state: 83.
+##
+## var_init -> ASSIGN . expr SEMICOLON [ WHILE VAR TRUE THIS SUPER STRING SEMICOLON RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## ASSIGN
+##
+
+Expected <expr> after '='.
+
+program: LEFT_PAREN FALSE SEMICOLON
+##
+## Ends in an error in state: 66.
+##
+## primary -> LEFT_PAREN expr . RIGHT_PAREN [ TIMES SEMICOLON RIGHT_PAREN PLUS OR NEQ MINUS LT LEQ LEFT_PAREN GT GEQ EQ DOT DIVIDE COMMA ASSIGN AND ]
+##
+## The known suffix of the stack is as follows:
+## LEFT_PAREN expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+program: WHILE LEFT_PAREN FALSE SEMICOLON
+##
+## Ends in an error in state: 69.
+##
+## statement -> WHILE LEFT_PAREN expr . RIGHT_PAREN statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## WHILE LEFT_PAREN expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+program: IF LEFT_PAREN FALSE SEMICOLON
+##
+## Ends in an error in state: 90.
+##
+## statement -> IF LEFT_PAREN expr . RIGHT_PAREN statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+## statement -> IF LEFT_PAREN expr . RIGHT_PAREN statement ELSE statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IF LEFT_PAREN expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+program: FOR LEFT_PAREN SEMICOLON SEMICOLON FALSE SEMICOLON
+##
+## Ends in an error in state: 106.
+##
+## for_step -> expr . RIGHT_PAREN [ WHILE TRUE THIS SUPER STRING RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FOR FALSE BANG ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+
+Expected ')' after <expr>.
+
+program: WHILE LEFT_PAREN FALSE RIGHT_PAREN VAR
+##
+## Ends in an error in state: 70.
+##
+## statement -> WHILE LEFT_PAREN expr RIGHT_PAREN . statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## WHILE LEFT_PAREN expr RIGHT_PAREN
+##
+program: IF LEFT_PAREN FALSE RIGHT_PAREN VAR
+##
+## Ends in an error in state: 91.
+##
+## statement -> IF LEFT_PAREN expr RIGHT_PAREN . statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+## statement -> IF LEFT_PAREN expr RIGHT_PAREN . statement ELSE statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IF LEFT_PAREN expr RIGHT_PAREN
+##
+program: FOR LEFT_PAREN SEMICOLON SEMICOLON RIGHT_PAREN VAR
+##
+## Ends in an error in state: 102.
+##
+## statement -> FOR LEFT_PAREN for_init for_cond for_step . statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## FOR LEFT_PAREN for_init for_cond for_step
+##
+
+Expected <statement> after ')'.
+
+program: RETURN WHILE
+##
+## Ends in an error in state: 71.
+##
+## statement -> RETURN . return_expr [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## RETURN
+##
+program: PRINT WHILE
+##
+## Ends in an error in state: 76.
+##
+## statement -> PRINT . expr SEMICOLON [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## PRINT
+##
+program: RETURN FALSE RIGHT_PAREN
+##
+## Ends in an error in state: 74.
+##
+## return_expr -> expr . SEMICOLON [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+program: PRINT FALSE RIGHT_PAREN
+##
+## Ends in an error in state: 77.
+##
+## statement -> PRINT expr . SEMICOLON [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## PRINT expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+program: VAR IDENTIFIER ASSIGN FALSE RIGHT_PAREN
+##
+## Ends in an error in state: 84.
+##
+## var_init -> ASSIGN expr . SEMICOLON [ WHILE VAR TRUE THIS SUPER STRING SEMICOLON RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## ASSIGN expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+program: FALSE RIGHT_PAREN
+##
+## Ends in an error in state: 104.
+##
+## statement -> expr . SEMICOLON [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+
+Unexpected end of <statement>. Did you forget a ';'?
+
+program: LEFT_BRACE TIMES
+##
+## Ends in an error in state: 79.
+##
+## statement -> LEFT_BRACE . block_body [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## LEFT_BRACE
+##
+program: FUN IDENTIFIER LEFT_PAREN RIGHT_PAREN LEFT_BRACE TIMES
+##
+## Ends in an error in state: 124.
+##
+## func -> IDENTIFIER LEFT_PAREN parameters LEFT_BRACE . block_body [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IDENTIFIER LEFT_PAREN parameters LEFT_BRACE
+##
+
+Malformed block. Did you forget a '}'?
+
+program: VAR WHILE
+##
+## Ends in an error in state: 80.
+##
+## declaration -> VAR . IDENTIFIER var_init [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## VAR
+##
+program: FOR LEFT_PAREN VAR WHILE
+##
+## Ends in an error in state: 94.
+##
+## for_init -> VAR . IDENTIFIER var_init [ TRUE THIS SUPER STRING SEMICOLON NUMBER NIL MINUS LEFT_PAREN IDENTIFIER FALSE BANG ]
+##
+## The known suffix of the stack is as follows:
+## VAR
+##
+
+Expected <identifier> after 'var'.
+
+program: IF WHILE
+##
+## Ends in an error in state: 88.
+##
+## statement -> IF . LEFT_PAREN expr RIGHT_PAREN statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+## statement -> IF . LEFT_PAREN expr RIGHT_PAREN statement ELSE statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IF
+##
+
+Expected '(' after 'if'.
+
+program: FOR WHILE
+##
+## Ends in an error in state: 92.
+##
+## statement -> FOR . LEFT_PAREN for_init for_cond for_step statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## FOR
+##
+
+Expected '(' after 'for'.
+
+program: FOR LEFT_PAREN WHILE
+##
+## Ends in an error in state: 93.
+##
+## statement -> FOR LEFT_PAREN . for_init for_cond for_step statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## FOR LEFT_PAREN
+##
+
+Expected 'var', <expr>, or ';' after '('.
+
+program: FOR LEFT_PAREN SEMICOLON WHILE
+##
+## Ends in an error in state: 98.
+##
+## statement -> FOR LEFT_PAREN for_init . for_cond for_step statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## FOR LEFT_PAREN for_init
+##
+
+Expected <expr> or ';' after ';'.
+
+program: FOR LEFT_PAREN SEMICOLON SEMICOLON WHILE
+##
+## Ends in an error in state: 100.
+##
+## statement -> FOR LEFT_PAREN for_init for_cond . for_step statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## FOR LEFT_PAREN for_init for_cond
+##
+
+Expected <expr> or ')' after ';'.
+
+program: FOR LEFT_PAREN SEMICOLON FALSE RIGHT_PAREN
+##
+## Ends in an error in state: 108.
+##
+## for_cond -> expr . SEMICOLON [ TRUE THIS SUPER STRING RIGHT_PAREN NUMBER NIL MINUS LEFT_PAREN IDENTIFIER FALSE BANG ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+program: FOR LEFT_PAREN FALSE RIGHT_PAREN
+##
+## Ends in an error in state: 110.
+##
+## for_init -> expr . SEMICOLON [ TRUE THIS SUPER STRING SEMICOLON NUMBER NIL MINUS LEFT_PAREN IDENTIFIER FALSE BANG ]
+##
+## The known suffix of the stack is as follows:
+## expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 17, spurious reduction of production call -> primary
+## In state 55, spurious reduction of production unary -> call
+## In state 20, spurious reduction of production factor -> unary
+## In state 28, spurious reduction of production term -> factor
+## In state 26, spurious reduction of production comparison -> term
+## In state 47, spurious reduction of production equality -> comparison
+## In state 44, spurious reduction of production logic_and -> equality
+## In state 41, spurious reduction of production logic_or -> logic_and
+## In state 40, spurious reduction of production assignment -> logic_or
+## In state 58, spurious reduction of production expr -> assignment
+##
+
+Unexpected end of 'for'. Did you forget a ';'?
+
+program: IF LEFT_PAREN FALSE RIGHT_PAREN LEFT_BRACE RIGHT_BRACE ELSE VAR
+##
+## Ends in an error in state: 113.
+##
+## statement -> IF LEFT_PAREN expr RIGHT_PAREN statement ELSE . statement [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF ELSE CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IF LEFT_PAREN expr RIGHT_PAREN statement ELSE
+##
+
+Expected <statement> after 'else'.
+
+program: FUN WHILE
+##
+## Ends in an error in state: 115.
+##
+## declaration -> FUN . func [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## FUN
+##
+
+Expected <identifier> after 'fun'.
+
+program: FUN IDENTIFIER WHILE
+##
+## Ends in an error in state: 116.
+##
+## func -> IDENTIFIER . LEFT_PAREN parameters LEFT_BRACE block_body [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IDENTIFIER
+##
+
+Expected '(' after <identifier>.
+
+program: FUN IDENTIFIER LEFT_PAREN WHILE
+##
+## Ends in an error in state: 117.
+##
+## func -> IDENTIFIER LEFT_PAREN . parameters LEFT_BRACE block_body [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IDENTIFIER LEFT_PAREN
+##
+
+Expected <identifier> or ')' after '('.
+
+program: FUN IDENTIFIER LEFT_PAREN IDENTIFIER WHILE
+##
+## Ends in an error in state: 119.
+##
+## parameters -> IDENTIFIER . RIGHT_PAREN [ LEFT_BRACE ]
+## parameters -> IDENTIFIER . COMMA parameters [ LEFT_BRACE ]
+##
+## The known suffix of the stack is as follows:
+## IDENTIFIER
+##
+
+Expected ',' or ')' after <identifier>.
+
+program: FUN IDENTIFIER LEFT_PAREN IDENTIFIER COMMA WHILE
+##
+## Ends in an error in state: 121.
+##
+## parameters -> IDENTIFIER COMMA . parameters [ LEFT_BRACE ]
+##
+## The known suffix of the stack is as follows:
+## IDENTIFIER COMMA
+##
+
+Expected <identifier> after ','.
+
+program: FUN IDENTIFIER LEFT_PAREN RIGHT_PAREN WHILE
+##
+## Ends in an error in state: 123.
+##
+## func -> IDENTIFIER LEFT_PAREN parameters . LEFT_BRACE block_body [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## IDENTIFIER LEFT_PAREN parameters
+##
+
+Expected '{' after ')'.
+
+program: CLASS WHILE
+##
+## Ends in an error in state: 125.
+##
+## declaration -> CLASS . IDENTIFIER inherits funcs [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## CLASS
+##
+
+Expected <identifier> after 'class'.
+
+program: CLASS IDENTIFIER WHILE
+##
+## Ends in an error in state: 126.
+##
+## declaration -> CLASS IDENTIFIER . inherits funcs [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## CLASS IDENTIFIER
+##
+
+Expected '<' or '{' after <identifier>.
+
+program: CLASS IDENTIFIER LT WHILE
+##
+## Ends in an error in state: 127.
+##
+## inherits -> LT . IDENTIFIER LEFT_BRACE [ RIGHT_BRACE IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LT
+##
+
+Expected <identifier> after '<'.
+
+program: CLASS IDENTIFIER LT IDENTIFIER WHILE
+##
+## Ends in an error in state: 128.
+##
+## inherits -> LT IDENTIFIER . LEFT_BRACE [ RIGHT_BRACE IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LT IDENTIFIER
+##
+
+Expected '{' after <identifier>.
+
+program: CLASS IDENTIFIER LEFT_BRACE WHILE
+##
+## Ends in an error in state: 131.
+##
+## declaration -> CLASS IDENTIFIER inherits . funcs [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## CLASS IDENTIFIER inherits
+##
+program: CLASS IDENTIFIER LEFT_BRACE IDENTIFIER LEFT_PAREN RIGHT_PAREN LEFT_BRACE RIGHT_BRACE WHILE
+##
+## Ends in an error in state: 134.
+##
+## funcs -> func . funcs [ WHILE VAR TRUE THIS SUPER STRING RIGHT_BRACE RETURN PRINT NUMBER NIL MINUS LEFT_PAREN LEFT_BRACE IF IDENTIFIER FUN FOR FALSE EOF CLASS BANG ]
+##
+## The known suffix of the stack is as follows:
+## func
+##
+
+Expected <declaration> or '}'.
+

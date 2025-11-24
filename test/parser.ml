@@ -1,10 +1,6 @@
 open! Core
 
-let parse_with_error lexbuf =
-  try Lox.Parser.program Lox.Lexer.read lexbuf
-  with Lox.Parser.Error ->
-    printf "Parse error\n%!";
-    []
+let parse_with_error = Lox.Util.parse_with_error
 
 let%expect_test "respects operator precedence" =
   In_channel.with_file "../test_programs/precedence.lox" ~f:(fun f ->

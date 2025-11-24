@@ -57,7 +57,7 @@ rule read =
   | '"'             { read_string (Buffer.create 16) lexbuf }
   | number          { NUMBER (Float.of_string @@ Lexing.lexeme lexbuf) }
   | identifier      { IDENTIFIER (Lexing.lexeme lexbuf) }
-  | _               { raise (SyntaxError ("Unexpected character: " ^ Lexing.lexeme lexbuf)) }
+  | _               { raise (SyntaxError ("Unexpected character: " ^ Lexing.lexeme lexbuf ^ ".")) }
   | eof             { EOF }
 and consume_comment =
   parse
@@ -72,4 +72,4 @@ and read_string buf =
                       read_string buf lexbuf }
   | [^ '"']+        { Buffer.add_string buf (Lexing.lexeme lexbuf);
                       read_string buf lexbuf }
-  | eof             { raise (SyntaxError ("Unterminated string")) }
+  | eof             { raise (SyntaxError ("Unterminated string.")) }

@@ -1,7 +1,3 @@
-%{
-(* TODO: add error messages when dune supports menhir .message files *)
-%}
-
 %token <float> NUMBER
 %token <string> STRING
 %token <string> IDENTIFIER

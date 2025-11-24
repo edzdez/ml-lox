@@ -29,10 +29,11 @@ let%expect_test "reject assignments to non-lvalues" =
     |}
   in
   check_semant lexbuf;
-  [%expect {|
-    :2:7: Semantic error: left-hand side of `=` is not an lvalue
-    :3:21: Semantic error: left-hand side of `=` is not an lvalue
-    :4:40: Semantic error: left-hand side of `=` is not an lvalue
-    :5:55: Semantic error: left-hand side of `=` is not an lvalue
-    :6:72: Semantic error: left-hand side of `=` is not an lvalue
+  [%expect
+    {|
+    :2:7: Expected lvalue before '='.
+    :3:21: Expected lvalue befor '='.
+    :4:40: Expected lvalue before '='.
+    :5:55: Expected lvalue before '='.
+    :6:72: Expected lvalue befor '='.
     |}]

@@ -20,7 +20,7 @@ let%expect_test "unexpected character error" =
       [%expect
         {|
         IDENTIFIER[foo] LEFT_PAREN IDENTIFIER[a]
-        Unexpected character: |
+        Unexpected character: |.
         |}])
 
 let%expect_test "lexes identifiers" =

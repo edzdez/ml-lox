@@ -1,5 +1,28 @@
 open! Core
 
+let parse_with_error lexbuf =
+  let print_position outx (lexbuf : Lexing.lexbuf) =
+    let pos = lexbuf.lex_curr_p in
+    fprintf outx "%s:%d:%d" pos.pos_fname pos.pos_lnum
+      (pos.pos_cnum - pos.pos_bol + 1)
+  in
+  try Parser.program Lexer.read lexbuf with
+  | Lexer.SyntaxError msg ->
+      fprintf stderr "%a: %s\n%!" print_position lexbuf msg;
+      []
+  | Parser.Error state ->
+      fprintf stderr "%a: %s%!" print_position lexbuf
+        (Parser_messages.message state);
+      []
+
+let do_semant decl =
+  try
+    Semant.check_declaration decl;
+    true
+  with Failure msg ->
+    fprintf stderr "%s\n%!" msg;
+    false
+
 let string_of_token (t : Parser.token) =
   match t with
   | Parser.WHILE -> "WHILE"

@@ -51,19 +51,15 @@ and check_expr e =
           | Ast.Var_expr _ -> ()
           | _ ->
               failwith
-              @@ sprintf
-                   "%s:%d:%d: Semantic error: left-hand side of `=` is not an \
-                    lvalue"
-                   fname lnum cnum)
+              @@ sprintf "%s:%d:%d: Expected lvalue before '='." fname lnum cnum
+          )
       | { calls; _ } -> (
           match List.last_exn calls with
           | Member _ -> ()
           | _ ->
               failwith
-              @@ sprintf
-                   "%s:%d:%d: Semantic error: left-hand side of `=` is not an \
-                    lvalue"
-                   fname lnum cnum))
+              @@ sprintf "%s:%d:%d: Expected lvalue befor '='." fname lnum cnum)
+      )
   | Ast.Or_expr (e1, e2) ->
       check_expr e1;
       check_expr e2
