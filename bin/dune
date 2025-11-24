@@ -1,5 +1,5 @@
 (executable
  (name lox)
- (libraries core core_unix stdio lox)
+ (libraries core core_unix.command_unix stdio lox)
  (preprocess
   (pps ppx_jane)))

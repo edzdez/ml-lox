@@ -1,3 +1,0 @@
-open! Core
-
-type program
