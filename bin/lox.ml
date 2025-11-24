@@ -15,9 +15,19 @@ let parse_with_error lexbuf =
       fprintf stderr "%a: Parse error\n%!" print_position lexbuf;
       []
 
+let do_semant decl =
+  try
+    Semant.check_declaration decl;
+    true
+  with Failure msg ->
+    fprintf stderr "%s\n%!" msg;
+    false
+
 let do_lox lexbuf =
   let ast = parse_with_error lexbuf in
-  List.iter ast ~f:Semant.check_declaration
+  match List.for_all ast ~f:do_semant with
+  | false -> ()
+  | true -> List.iter ast ~f:(Ast.print ~outx:stderr)
 
 let rec repl () =
   eprintf "lox:> %!";
