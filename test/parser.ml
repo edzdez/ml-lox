@@ -88,3 +88,12 @@ let%expect_test "funky calls" =
     (Stmt_decl(Expr_stmt(Call_expr((primary(Var_expr d))(calls((Member e)(Member f)(Member g)(Call())(Member h)(Member i)(Member j)))))))
     (Stmt_decl(Expr_stmt(Call_expr((primary(Var_expr h))(calls((Member i)(Call((Call_expr((primary(Var_expr j))(calls())))(Call_expr((primary(Var_expr k))(calls())))(Call_expr((primary(Var_expr l))(calls())))))(Member m)(Member n)(Call((Call_expr((primary(Var_expr z))(calls())))(Call_expr((primary(Var_expr o))(calls((Call())))))(Call_expr((primary(Var_expr p))(calls())))))))))))
     |}]
+
+let%expect_test "dangling else" =
+  In_channel.with_file "../test_programs/if/dangling_else.lox" ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      List.iter ~f:(Lox.Ast.print ~outx:stdout) @@ parse_with_error lexbuf);
+  [%expect {|
+    (Stmt_decl(If_stmt((cond(Call_expr((primary(Bool_expr true))(calls()))))(consequent(If_stmt((cond(Call_expr((primary(Bool_expr false))(calls()))))(consequent(Print_stmt(Call_expr((primary(String_expr bad))(calls())))))(alternative((Print_stmt(Call_expr((primary(String_expr good))(calls())))))))))(alternative()))))
+    (Stmt_decl(If_stmt((cond(Call_expr((primary(Bool_expr false))(calls()))))(consequent(If_stmt((cond(Call_expr((primary(Bool_expr true))(calls()))))(consequent(Print_stmt(Call_expr((primary(String_expr bad))(calls())))))(alternative((Print_stmt(Call_expr((primary(String_expr bad))(calls())))))))))(alternative()))))
+    |}]
