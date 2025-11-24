@@ -1,5 +1,7 @@
 open! Core
 
+exception SemantError of Ast.position * string
+
 (* We really, only check that assignment is to valid lvalues... *)
 let rec check_declaration (t : Ast.declaration) =
   match t with
@@ -42,67 +44,62 @@ and check_statement s =
 
 and check_expr e =
   match e with
-  | Ast.Assign_expr ({ lhs; rhs }, (fname, lnum, cnum)) -> (
+  | Ast.Assign_expr ({ lhs; rhs }, pos) -> (
       check_expr rhs;
       (* ensure that lhs is an lvalue *)
       match lhs with
       | { primary; calls = [] } -> (
           match primary with
           | Ast.Var_expr _ -> ()
-          | _ ->
-              failwith
-              @@ sprintf "%s:%d:%d: Expected lvalue before '='." fname lnum cnum
-          )
+          | _ -> raise (SemantError (pos, "Expected lvalue before '='.")))
       | { calls; _ } -> (
           match List.last_exn calls with
           | Member _ -> ()
-          | _ ->
-              failwith
-              @@ sprintf "%s:%d:%d: Expected lvalue befor '='." fname lnum cnum)
-      )
-  | Ast.Or_expr (e1, e2) ->
+          | _ -> raise (SemantError (pos, "Expected lvalue before '='."))))
+  | Ast.Or_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.And_expr (e1, e2) ->
+  | Ast.And_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Eq_expr (e1, e2) ->
+  | Ast.Eq_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Neq_expr (e1, e2) ->
+  | Ast.Neq_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Lt_expr (e1, e2) ->
+  | Ast.Lt_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Leq_expr (e1, e2) ->
+  | Ast.Leq_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Gt_expr (e1, e2) ->
+  | Ast.Gt_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Geq_expr (e1, e2) ->
+  | Ast.Geq_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Add_expr (e1, e2) ->
+  | Ast.Add_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Sub_expr (e1, e2) ->
+  | Ast.Sub_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Mult_expr (e1, e2) ->
+  | Ast.Mult_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Div_expr (e1, e2) ->
+  | Ast.Div_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
-  | Ast.Neg_expr e -> check_expr e
-  | Ast.Minus_expr e -> check_expr e
-  | Ast.Call_expr { primary; calls } ->
+  | Ast.Neg_expr (e, _) -> check_expr e
+  | Ast.Minus_expr (e, _) -> check_expr e
+  | Ast.Call_expr ({ primary; calls }, _) ->
       check_atom_expr primary;
       List.iter calls ~f:check_call_t
 
-and check_atom_expr e = match e with Ast.Expr_expr e -> check_expr e | _ -> ()
+and check_atom_expr e =
+  match e with Ast.Expr_expr (e, _) -> check_expr e | _ -> ()
 
 and check_call_t t =
   match t with Ast.Call xs -> List.iter xs ~f:check_expr | Ast.Member _ -> ()

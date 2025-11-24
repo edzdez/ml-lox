@@ -191,72 +191,87 @@ expr:
 assignment:
   | lhs = call; ASSIGN; rhs = assignment
     { let (pos, _) : Lexing.position * Lexing.position = $loc in
-      Assign_expr ({lhs; rhs}, (pos.pos_fname, pos.pos_lnum, pos.pos_cnum)) }
+      Assign_expr ({lhs; rhs}, pos) }
   | expr = logic_or
     { expr }
   ;
 
 logic_or:
   | lhs = logic_and; OR; rhs = logic_or
-    { Or_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Or_expr (lhs, rhs, pos) }
   | expr = logic_and
     { expr }
   ;
 
 logic_and:
   | lhs = equality; AND; rhs = logic_and
-    { And_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      And_expr (lhs, rhs, pos) }
   | expr = equality
     { expr }
   ;
 
 equality:
   | lhs = comparison; EQ; rhs = equality
-    { Eq_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Eq_expr (lhs, rhs, pos) }
   | lhs = comparison; NEQ; rhs = equality
-    { Neq_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Neq_expr (lhs, rhs, pos) }
   | expr = comparison
     { expr }
   ;
 
 comparison:
   | lhs = term; LT; rhs = comparison
-    { Lt_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Lt_expr (lhs, rhs, pos) }
   | lhs = term; LEQ; rhs = comparison
-    { Leq_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Leq_expr (lhs, rhs, pos) }
   | lhs = term; GT; rhs = comparison
-    { Gt_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Gt_expr (lhs, rhs, pos) }
   | lhs = term; GEQ; rhs = comparison
-    { Geq_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Geq_expr (lhs, rhs, pos) }
   | expr = term
     { expr }
   ;
 
 term:
   | lhs = factor; PLUS; rhs = term
-    { Add_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Add_expr (lhs, rhs, pos) }
   | lhs = factor; MINUS; rhs = term
-    { Sub_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Sub_expr (lhs, rhs, pos) }
   | expr = factor
     { expr }
   ;
 
 factor:
   | lhs = unary; TIMES; rhs = factor
-    { Mult_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Mult_expr (lhs, rhs, pos) }
   | lhs = unary; DIVIDE; rhs = factor
-    { Div_expr (lhs, rhs) }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Div_expr (lhs, rhs, pos) }
   | expr = unary
     { expr }
   ;
 
 unary:
   | BANG; e = unary
-    { Neg_expr e }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Neg_expr (e, pos) }
   | MINUS; e = unary
-    { Minus_expr e }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Minus_expr (e, pos) }
   | expr = call
-    { Ast.Call_expr expr }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Ast.Call_expr (expr, pos) }
   ;
 
 call:
@@ -300,8 +315,11 @@ primary:
   | s = STRING
     { String_expr s }
   | id = IDENTIFIER
-    { Var_expr id }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Var_expr (id, pos) }
   | LEFT_PAREN; e = expr; RIGHT_PAREN
-    { Expr_expr e }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Expr_expr (e, pos) }
   | SUPER; DOT; id = IDENTIFIER
-    { Ast.Super_expr id }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Ast.Super_expr (id, pos) }

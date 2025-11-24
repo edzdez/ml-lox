@@ -3,9 +3,7 @@ open Lox
 
 let do_lox lexbuf =
   let ast = Util.parse_with_error lexbuf in
-  match List.for_all ast ~f:Util.do_semant with
-  | false -> ()
-  | true -> List.iter ast ~f:(Ast.print ~outx:stderr)
+  if List.for_all ast ~f:Util.do_semant then Util.do_interpret ast
 
 let rec repl () =
   eprintf "lox:> %!";

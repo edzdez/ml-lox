@@ -1,6 +1,6 @@
 open! Core
 
-type position = string * int * int
+type position = Lexing.position
 
 let sexp_of_position _ = Sexp.Atom "pos"
 
@@ -19,29 +19,28 @@ and atom_expr =
   | This_expr
   | Number_expr of float
   | String_expr of string
-  | Var_expr of string
-  | Super_expr of string
-  | Expr_expr of expr
+  | Var_expr of string * position
+  | Super_expr of string * position
+  | Expr_expr of expr * position
 [@@deriving sexp_of]
 
 and expr =
-  (* assign seems to be the only node we need to augment for semant... *)
   | Assign_expr of assign_expr * position
-  | Or_expr of expr * expr
-  | And_expr of expr * expr
-  | Eq_expr of expr * expr
-  | Neq_expr of expr * expr
-  | Lt_expr of expr * expr
-  | Leq_expr of expr * expr
-  | Gt_expr of expr * expr
-  | Geq_expr of expr * expr
-  | Add_expr of expr * expr
-  | Sub_expr of expr * expr
-  | Mult_expr of expr * expr
-  | Div_expr of expr * expr
-  | Neg_expr of expr
-  | Minus_expr of expr
-  | Call_expr of call_expr
+  | Or_expr of expr * expr * position
+  | And_expr of expr * expr * position
+  | Eq_expr of expr * expr * position
+  | Neq_expr of expr * expr * position
+  | Lt_expr of expr * expr * position
+  | Leq_expr of expr * expr * position
+  | Gt_expr of expr * expr * position
+  | Geq_expr of expr * expr * position
+  | Add_expr of expr * expr * position
+  | Sub_expr of expr * expr * position
+  | Mult_expr of expr * expr * position
+  | Div_expr of expr * expr * position
+  | Neg_expr of expr * position
+  | Minus_expr of expr * position
+  | Call_expr of call_expr * position
 [@@deriving sexp_of]
 
 type class_decl = { name : string; parent : string option; body : func list }

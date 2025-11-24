@@ -3,7 +3,8 @@ open! Core
 let check_semant lexbuf =
   let ast = Lox.Parser.program Lox.Lexer.read lexbuf in
   List.iter ast ~f:(fun d ->
-      try Lox.Semant.check_declaration d with Failure s -> printf "%s\n" s)
+      let _ = Lox.Util.do_semant d in
+      ())
 
 let%expect_test "allow assignments to lvalues" =
   let lexbuf =
@@ -32,8 +33,8 @@ let%expect_test "reject assignments to non-lvalues" =
   [%expect
     {|
     :2:7: Expected lvalue before '='.
-    :3:21: Expected lvalue befor '='.
-    :4:40: Expected lvalue before '='.
-    :5:55: Expected lvalue before '='.
-    :6:72: Expected lvalue befor '='.
+    :3:7: Expected lvalue before '='.
+    :4:7: Expected lvalue before '='.
+    :5:7: Expected lvalue before '='.
+    :6:7: Expected lvalue before '='.
     |}]
