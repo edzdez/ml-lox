@@ -21,31 +21,29 @@ and check_statement s =
   match s with
   | Ast.Expr_stmt e -> check_expr e
   | Ast.For_stmt { init; cond; step; body } ->
-      let () =
-        match init with
-        | None -> ()
-        | Decl { init; _ } -> (
-            match init with None -> () | Some e -> check_expr e)
-        | Expr e -> check_expr e
-      in
-      let () = match cond with None -> () | Some e -> check_expr e in
-      let () = match step with None -> () | Some e -> check_expr e in
+      (match init with
+      | None -> ()
+      | Decl { init; _ } -> (
+          match init with None -> () | Some e -> check_expr e)
+      | Expr e -> check_expr e);
+      (match cond with None -> () | Some e -> check_expr e);
+      (match step with None -> () | Some e -> check_expr e);
       check_statement body
   | Ast.If_stmt { cond; consequent; alternative } -> (
-      let () = check_expr cond in
-      let () = check_statement consequent in
+      check_expr cond;
+      check_statement consequent;
       match alternative with None -> () | Some s -> check_statement s)
   | Ast.Print_stmt e -> check_expr e
   | Ast.Return_stmt e -> ( match e with None -> () | Some e -> check_expr e)
   | Ast.While_stmt { cond; body } ->
-      let () = check_expr cond in
+      check_expr cond;
       check_statement body
   | Ast.Block_stmt decls -> List.iter decls ~f:check_declaration
 
 and check_expr e =
   match e with
   | Ast.Assign_expr ({ lhs; rhs }, (fname, lnum, cnum)) -> (
-      let () = check_expr rhs in
+      check_expr rhs;
       (* ensure that lhs is an lvalue *)
       match lhs with
       | { primary; calls = [] } -> (
