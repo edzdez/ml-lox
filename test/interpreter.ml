@@ -88,3 +88,34 @@ let%expect_test "runtime error on type mismatches" =
     :1:7: Operands to '+' must both be numbers or strings.
     :1:7: Operands to '+' must both be numbers or strings.
     |}]
+
+let%expect_test "works with global variables" =
+  let lexbuf =
+    Lexing.from_string {|
+    var a = 5;
+    var b = 10;
+    print a + b;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| 15 |}]
+
+let%expect_test "allows redefinition of global variables" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    var a = 5;
+    var b = 10;
+    var a = 15;
+    print a + b;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| 25 |}]
+
+let%expect_test "runtime error on undefined variable" =
+  let lexbuf = Lexing.from_string {|
+    print a;
+    |} in
+  interpret lexbuf;
+  [%expect {| :2:11: Undefined variable 'a'. |}]

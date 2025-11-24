@@ -42,7 +42,10 @@ let rec eval_atom_expr env (expr : Ast.atom_expr) =
   | Ast.This_expr -> assert false
   | Ast.Number_expr n -> (Number n, env)
   | Ast.String_expr s -> (String s, env)
-  | Ast.Var_expr (_, _) -> assert false
+  | Ast.Var_expr (name, pos) -> (
+      match Map.find env name with
+      | None -> raise (EvalError (pos, "Undefined variable '" ^ name ^ "'."))
+      | Some v -> (v, env))
   | Ast.Super_expr (_e, _) -> assert false
   | Ast.Expr_expr (e, _) -> eval_expr env e
 
@@ -141,5 +144,10 @@ and execute_declaration env (t : Ast.declaration) =
   match t with
   | Ast.Class_decl _ -> assert false
   | Ast.Func_decl _ -> assert false
-  | Ast.Var_decl _ -> assert false
+  | Ast.Var_decl { name; init } ->
+      let v, env' =
+        match init with None -> (Nil, env) | Some e -> eval_expr env e
+      in
+      let env'' = Map.update env' name ~f:(fun _ -> v) in
+      (v, env'')
   | Ast.Stmt_decl s -> execute_statement env s
