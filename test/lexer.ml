@@ -63,3 +63,35 @@ let%expect_test "lexes punctuators" =
       print_tokens lexbuf;
       [%expect
         {| LEFT_PAREN LEFT_PAREN LEFT_BRACE RIGHT_PAREN SEMICOLON COMMA PLUS MINUS TIMES NEQ EQ LEQ GEQ NEQ LT GT DIVIDE DOT EOF |}])
+
+let%expect_test "behaves with comments" =
+  List.iter
+    ~f:(fun file ->
+      In_channel.with_file file ~f:(fun f ->
+          let lexbuf = Lexing.from_channel f in
+          print_tokens lexbuf;
+          printf "\n"))
+    [
+      "../test_programs/comments/line_at_eof.lox";
+      "../test_programs/comments/only_line_comment.lox";
+      "../test_programs/comments/only_line_comment_and_line.lox";
+      "../test_programs/comments/unicode.lox";
+    ];
+  [%expect
+    {|
+    PRINT STRING[ok] SEMICOLON EOF
+    EOF
+    EOF
+    PRINT STRING[ok] SEMICOLON EOF
+    |}]
+
+let%expect_test "multiline strings" =
+  let lexbuf =
+    Lexing.from_string {|
+        "hi
+        there
+        whoa"
+    |}
+  in
+  print_tokens lexbuf;
+  [%expect {| STRING[hi\n        there\n        whoa] EOF |}]
