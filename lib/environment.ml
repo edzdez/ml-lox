@@ -6,7 +6,7 @@ type lox_object [@@deriving sexp_of]
 
 and lox_function = {
   arity : int;
-  call : t -> value list -> value;
+  call : value list -> value;
   string_repr : string;
 }
 [@@deriving sexp_of]
@@ -59,7 +59,7 @@ let empty () : t =
            arity = 0;
            string_repr = "<native fn>";
            call =
-             (fun _ _ ->
+             (fun _ ->
                Number
                  (Time_float.now () |> Time_float.to_span_since_epoch
                 |> Time_float.Span.to_sec));

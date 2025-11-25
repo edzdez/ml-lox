@@ -363,3 +363,28 @@ let%expect_test "reports a runtime error when returning outside of a function" =
   let lexbuf = Lexing.from_string {| return; |} in
   interpret lexbuf;
   [%expect {| :1:2: Unexpected return. |}]
+
+let%expect_test "functions are closures" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      fun makeCounter() {
+        var i = 0;
+        fun count() {
+          i = i + 1;
+          print i;
+        }
+
+        return count;
+      }
+
+      var counter = makeCounter();
+      counter(); // "1".
+      counter(); // "2".
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    1
+    2
+    |}]

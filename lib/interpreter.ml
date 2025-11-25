@@ -135,7 +135,7 @@ and call env ~callee ~args ~pos =
              ( pos,
                "Expected " ^ Int.to_string arity ^ " arguments but got "
                ^ Int.to_string num_args ^ "." ))
-      else try call env arg_vals with Return (_, v) -> v)
+      else try call arg_vals with Return (_, v) -> v)
   | _ -> raise (EvalError (pos, "Can only call functions and classes."))
 
 and execute_statement env (t : Ast.statement) : unit =
@@ -178,8 +178,8 @@ and execute_func_decl env { name; params; body; _ } =
            arity = List.length params;
            string_repr = "<fn " ^ name ^ ">";
            call =
-             (fun env args ->
-               let env = open_scope @@ [ List.last_exn env ] in
+             (fun args ->
+               let env = open_scope @@ env in
                let zipped = List.zip_exn params args in
                List.iter zipped ~f:(fun (name, value) ->
                    define env ~name ~value);
