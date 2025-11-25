@@ -71,8 +71,12 @@ and eval_expr env (expr : Ast.expr) =
       let rhs, env' = eval_expr env rhs in
       let rhs, env'' = assign_at env' lhs rhs in
       (rhs, env'')
-  | Ast.Or_expr (_e1, _e2, _pos) -> assert false
-  | Ast.And_expr (_e1, _e2, _pos) -> assert false
+  | Ast.Or_expr (e1, e2, _) ->
+      let v1, env' = eval_expr env e1 in
+      if is_truthy v1 then (v1, env') else eval_expr env' e2
+  | Ast.And_expr (e1, e2, _) ->
+      let v1, env' = eval_expr env e1 in
+      if not @@ is_truthy v1 then (v1, env') else eval_expr env' e2
   | Ast.Eq_expr (e1, e2, _) ->
       let v1, env' = eval_expr env e1 in
       let v2, env'' = eval_expr env' e2 in

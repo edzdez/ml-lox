@@ -191,3 +191,38 @@ let%expect_test "if then else" =
     yes!
     all done!
     |}]
+
+let%expect_test "logical operators" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      print "a" or false;
+      print nil or "a";
+      print false and "a";
+      print "a" and nil;
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    a
+    a
+    false
+    nil
+    |}]
+
+let%expect_test "logical operators should short circuit" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      var a = 10;
+      true or (a = 5);
+      print a;
+      false and (a = 5);
+      print a;
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    10
+    10
+    |}]
