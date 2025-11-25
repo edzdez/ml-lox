@@ -140,7 +140,8 @@ statement:
   | PRINT; e = expr; SEMICOLON
     { Print_stmt e }
   | RETURN; e = return_expr
-    { Return_stmt e }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Return_stmt (e, pos) }
   | WHILE; LEFT_PAREN; cond = expr; RIGHT_PAREN; body = statement
     { While_stmt { cond; body } }
   | LEFT_BRACE; body = block_body

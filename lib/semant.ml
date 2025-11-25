@@ -38,7 +38,8 @@ and check_statement s =
       check_statement consequent;
       match alternative with None -> () | Some s -> check_statement s)
   | Ast.Print_stmt e -> check_expr e
-  | Ast.Return_stmt e -> ( match e with None -> () | Some e -> check_expr e)
+  | Ast.Return_stmt (e, _) -> (
+      match e with None -> () | Some e -> check_expr e)
   | Ast.While_stmt { cond; body } ->
       check_expr cond;
       check_statement body

@@ -319,3 +319,47 @@ let%expect_test "can define and call functions" =
     2
     3
     |}]
+
+let%expect_test "can return within a function" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      fun fib(n) {
+        if (n <= 1) return n;
+        return fib(n - 2) + fib(n - 1);
+      }
+
+      for (var i = 0; i < 20; i = i + 1) {
+        print fib(i);
+      }
+      |}
+  in
+  interpret lexbuf;
+  [%expect
+    {|
+    0
+    1
+    1
+    2
+    3
+    5
+    8
+    13
+    21
+    34
+    55
+    89
+    144
+    233
+    377
+    610
+    987
+    1597
+    2584
+    4181
+    |}]
+
+let%expect_test "reports a runtime error when returning outside of a function" =
+  let lexbuf = Lexing.from_string {| return; |} in
+  interpret lexbuf;
+  [%expect {| :1:2: Unexpected return. |}]

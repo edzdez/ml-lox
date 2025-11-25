@@ -81,7 +81,7 @@ and statement =
   | For_stmt of for_stmt
   | If_stmt of if_stmt
   | Print_stmt of expr
-  | Return_stmt of expr option
+  | Return_stmt of expr option * position
   | While_stmt of while_stmt
   | Block_stmt of declaration list
 [@@deriving sexp_of]

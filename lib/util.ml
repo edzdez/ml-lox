@@ -28,6 +28,8 @@ let do_interpret ~env ast =
   with
   | Interpreter.EvalError (pos, msg) ->
       fprintf stderr "%a: %s\n%!" print_position pos msg
+  | Interpreter.Return (pos, _) ->
+      fprintf stderr "%a: Unexpected return.\n%!" print_position pos
   | Environment.EnvError (pos, msg) ->
       fprintf stderr "%a: %s\n%!" print_position pos msg
 

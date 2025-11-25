@@ -2,6 +2,7 @@ open! Core
 open Environment
 
 exception EvalError of Ast.position * string
+exception Return of Ast.position * value
 
 let is_truthy v = match v with Bool b -> b | Nil -> false | _ -> true
 
@@ -127,14 +128,14 @@ and call env ~callee ~args ~pos =
   let num_args = List.length arg_vals in
   match callee with
   | Object _ -> assert false
-  | Function { arity; call; _ } ->
+  | Function { arity; call; _ } -> (
       if num_args <> arity then
         raise
           (EvalError
              ( pos,
                "Expected " ^ Int.to_string arity ^ " arguments but got "
                ^ Int.to_string num_args ^ "." ))
-      else call env arg_vals
+      else try call env arg_vals with Return (_, v) -> v)
   | _ -> raise (EvalError (pos, "Can only call functions and classes."))
 
 and execute_statement env (t : Ast.statement) : unit =
@@ -154,7 +155,9 @@ and execute_statement env (t : Ast.statement) : unit =
   | Ast.Print_stmt e ->
       let v = eval_expr env e in
       printf "%s\n%!" @@ stringify v
-  | Ast.Return_stmt _ -> assert false
+  | Ast.Return_stmt (expr, pos) ->
+      let v = match expr with None -> Nil | Some expr -> eval_expr env expr in
+      raise (Return (pos, v))
   | Ast.While_stmt { cond; body } -> execute_loop ~cond:(Some cond) ~body env
   | Ast.Block_stmt ss ->
       let env' = open_scope env in
