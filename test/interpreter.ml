@@ -226,3 +226,68 @@ let%expect_test "logical operators should short circuit" =
     10
     10
     |}]
+
+let%expect_test "while loop" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      var i = 0;
+      while (i < 5) i = i + 1;
+      print i;
+      |}
+  in
+  interpret lexbuf;
+  [%expect {| 5 |}]
+
+let%expect_test "while loop scoping" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      var i = 0;
+      while (i < 5) {
+          var j = 10;
+          i = i + 1;
+      }
+      print j;
+      |}
+  in
+  interpret lexbuf;
+  [%expect {| :7:13: Undefined variable 'j'. |}]
+
+let%expect_test "for loop" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      for (var i = 0; i < 5; i = i + 1) print i;
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    0
+    1
+    2
+    3
+    4
+    |}]
+
+let%expect_test "for loop scoping" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      for (var i = 0; i < 5; i = i + 1) {
+          var i = 10;
+          print i;
+      }
+      print i;
+      |}
+  in
+  interpret lexbuf;
+  [%expect
+    {|
+    10
+    10
+    10
+    10
+    10
+    :6:13: Undefined variable 'i'.
+    |}]

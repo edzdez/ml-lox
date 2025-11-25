@@ -14,7 +14,7 @@
 
 (library
  (name lox)
- (modules lexer parser parser_messages semant interpreter ast util)
+ (modules lexer parser parser_messages semant interpreter environment ast util)
  (libraries core)
  (preprocess
   (pps ppx_jane)))

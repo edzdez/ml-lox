@@ -23,13 +23,14 @@ let do_semant decl =
     false
 
 let do_interpret ast =
-  let env = ref (Map.empty (module String)) in
+  let env = Environment.empty () in
   try
-    List.iter ast ~f:(fun decl ->
-        let _, env' = Interpreter.execute_declaration !env decl in
-        env := env')
-  with Interpreter.EvalError (pos, msg) ->
-    fprintf stderr "%a: %s\n%!" print_position pos msg
+    List.iter ast ~f:(fun decl -> Interpreter.execute_declaration env decl)
+  with
+  | Interpreter.EvalError (pos, msg) ->
+      fprintf stderr "%a: %s\n%!" print_position pos msg
+  | Environment.EnvError (pos, msg) ->
+      fprintf stderr "%a: %s\n%!" print_position pos msg
 
 let string_of_token (t : Parser.token) =
   match t with

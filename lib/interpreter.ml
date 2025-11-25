@@ -1,18 +1,7 @@
 open! Core
+open Environment
 
 exception EvalError of Ast.position * string
-
-type lox_object [@@deriving sexp_of]
-
-type value =
-  | Bool of bool
-  | String of string
-  | Number of float
-  | Object of lox_object ref
-  | Nil
-[@@deriving sexp_of]
-
-type env = (string, lox_object, String.comparator_witness) Map.t
 
 let is_truthy v = match v with Bool b -> b | Nil -> false | _ -> true
 
@@ -35,153 +24,146 @@ let stringify v =
   | Object o -> "ref#" ^ Sexp.to_string (sexp_of_lox_object !o)
   | Nil -> "nil"
 
-let assign_at env ({ primary; calls } : Ast.call_expr) v =
-  match calls with
-  | [] -> (
-      match primary with
-      | Var_expr (name, pos) ->
-          let env' =
-            Map.update env name ~f:(function
-              | None ->
-                  raise (EvalError (pos, "Undefined variable '" ^ name ^ "'."))
-              | Some _ -> v)
-          in
-          (v, env')
-      (* semant should rule this case out *)
-      | _ -> assert false)
-  | _ -> assert false
-
 let rec eval_atom_expr env (expr : Ast.atom_expr) =
   match expr with
-  | Ast.Bool_expr b -> (Bool b, env)
-  | Ast.Nil_expr -> (Nil, env)
+  | Ast.Bool_expr b -> Bool b
+  | Ast.Nil_expr -> Nil
   | Ast.This_expr -> assert false
-  | Ast.Number_expr n -> (Number n, env)
-  | Ast.String_expr s -> (String s, env)
-  | Ast.Var_expr (name, pos) -> (
-      match Map.find env name with
-      | None -> raise (EvalError (pos, "Undefined variable '" ^ name ^ "'."))
-      | Some v -> (v, env))
+  | Ast.Number_expr n -> Number n
+  | Ast.String_expr s -> String s
+  | Ast.Var_expr (name, pos) -> find ~name ~pos env
   | Ast.Super_expr (_e, _) -> assert false
   | Ast.Expr_expr (e, _) -> eval_expr env e
 
 and eval_expr env (expr : Ast.expr) =
   match expr with
   | Ast.Assign_expr ({ lhs; rhs }, _) ->
-      let rhs, env' = eval_expr env rhs in
-      let rhs, env'' = assign_at env' lhs rhs in
-      (rhs, env'')
+      let rhs = eval_expr env rhs in
+      assign_at env lhs rhs
   | Ast.Or_expr (e1, e2, _) ->
-      let v1, env' = eval_expr env e1 in
-      if is_truthy v1 then (v1, env') else eval_expr env' e2
+      let v1 = eval_expr env e1 in
+      if is_truthy v1 then v1 else eval_expr env e2
   | Ast.And_expr (e1, e2, _) ->
-      let v1, env' = eval_expr env e1 in
-      if not @@ is_truthy v1 then (v1, env') else eval_expr env' e2
+      let v1 = eval_expr env e1 in
+      if not @@ is_truthy v1 then v1 else eval_expr env e2
   | Ast.Eq_expr (e1, e2, _) ->
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
-      (Bool (are_equal v1 v2), env'')
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
+      Bool (are_equal v1 v2)
   | Ast.Neq_expr (e1, e2, _) ->
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
-      (Bool (not @@ are_equal v1 v2), env'')
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
+      Bool (not @@ are_equal v1 v2)
   | Ast.Lt_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Bool Float.(n1 < n2), env'')
+      | Number n1, Number n2 -> Bool Float.(n1 < n2)
       | _ -> raise (EvalError (pos, "Operands to '<' must both be numbers.")))
   | Ast.Leq_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Bool Float.(n1 <= n2), env'')
+      | Number n1, Number n2 -> Bool Float.(n1 <= n2)
       | _ -> raise (EvalError (pos, "Operands to '<=' must both be numbers.")))
   | Ast.Gt_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Bool Float.(n1 > n2), env'')
+      | Number n1, Number n2 -> Bool Float.(n1 > n2)
       | _ -> raise (EvalError (pos, "Operands to '>' must both be numbers.")))
   | Ast.Geq_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Bool Float.(n1 >= n2), env'')
+      | Number n1, Number n2 -> Bool Float.(n1 >= n2)
       | _ -> raise (EvalError (pos, "Operands to '>=' must both be numbers.")))
   | Ast.Add_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Number (n1 +. n2), env'')
-      | String s1, String s2 -> (String (s1 ^ s2), env'')
+      | Number n1, Number n2 -> Number (n1 +. n2)
+      | String s1, String s2 -> String (s1 ^ s2)
       | _ ->
           raise
             (EvalError (pos, "Operands to '+' must both be numbers or strings."))
       )
   | Ast.Sub_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Number (n1 -. n2), env'')
+      | Number n1, Number n2 -> Number (n1 -. n2)
       | _ -> raise (EvalError (pos, "Operands to '-' must both be numbers.")))
   | Ast.Mult_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Number (n1 *. n2), env'')
+      | Number n1, Number n2 -> Number (n1 *. n2)
       | _ -> raise (EvalError (pos, "Operands to '*' must both be numbers.")))
   | Ast.Div_expr (e1, e2, pos) -> (
-      let v1, env' = eval_expr env e1 in
-      let v2, env'' = eval_expr env' e2 in
+      let v1 = eval_expr env e1 in
+      let v2 = eval_expr env e2 in
       match (v1, v2) with
-      | Number n1, Number n2 -> (Number (n1 /. n2), env'')
+      | Number n1, Number n2 -> Number (n1 /. n2)
       | _ -> raise (EvalError (pos, "Operands to '/' must both be numbers.")))
   | Ast.Neg_expr (e, _) ->
-      let v, env' = eval_expr env e in
-      (Bool (not (is_truthy v)), env')
+      let v = eval_expr env e in
+      Bool (not (is_truthy v))
   | Ast.Minus_expr (e, pos) -> (
-      let v, env' = eval_expr env e in
+      let v = eval_expr env e in
       match v with
-      | Number n -> (Number Float.(-n), env')
+      | Number n -> Number Float.(-n)
       | _ -> raise (EvalError (pos, "Operand to '-' must be a number.")))
   | Ast.Call_expr ({ primary; calls }, _pos) -> (
-      let callee, env' = eval_atom_expr env primary in
-      match calls with [] -> (callee, env') | _ -> assert false)
+      let callee = eval_atom_expr env primary in
+      match calls with [] -> callee | _ -> assert false)
 
-(* NOTE: for now, we return values so that we may inspect them in the repl *)
-and execute_statement env (t : Ast.statement) =
+and execute_statement env (t : Ast.statement) : unit =
   match t with
-  | Ast.Expr_stmt e -> eval_expr env e
-  | Ast.For_stmt _ -> assert false
+  | Ast.Expr_stmt e -> ignore @@ eval_expr env e
+  | Ast.For_stmt { init; cond; step; body } ->
+      let env' = open_scope env in
+      execute_for_init env' init;
+      execute_loop ~cond ~step ~body env'
   | Ast.If_stmt { cond; consequent; alternative } -> (
-      let v, env' = eval_expr env cond in
-      if is_truthy v then execute_statement env' consequent
+      let v = eval_expr env cond in
+      if is_truthy v then execute_statement env consequent
       else
         match alternative with
-        | None -> (Nil, env')
-        | Some alternative -> execute_statement env' alternative)
+        | None -> ()
+        | Some alternative -> execute_statement env alternative)
   | Ast.Print_stmt e ->
-      let v, env' = eval_expr env e in
-      printf "%s\n%!" @@ stringify v;
-      (Nil, env')
+      let v = eval_expr env e in
+      printf "%s\n%!" @@ stringify v
   | Ast.Return_stmt _ -> assert false
-  | Ast.While_stmt _ -> assert false
+  | Ast.While_stmt { cond; body } -> execute_loop ~cond:(Some cond) ~body env
   | Ast.Block_stmt ss ->
-      let inner_env = ref env in
-      List.iter ss ~f:(fun decl ->
-          let _, inner_env' = execute_declaration !inner_env decl in
-          inner_env := inner_env');
-      (Nil, env)
+      let env' = open_scope env in
+      List.iter ss ~f:(execute_declaration env')
 
 and execute_declaration env (t : Ast.declaration) =
   match t with
   | Ast.Class_decl _ -> assert false
   | Ast.Func_decl _ -> assert false
-  | Ast.Var_decl { name; init } ->
-      let v, env' =
-        match init with None -> (Nil, env) | Some e -> eval_expr env e
-      in
-      let env'' = Map.update env' name ~f:(fun _ -> v) in
-      (v, env'')
+  | Ast.Var_decl v -> execute_var_decl env v
   | Ast.Stmt_decl s -> execute_statement env s
+
+and execute_var_decl env { name; init } =
+  let v = match init with None -> Nil | Some e -> eval_expr env e in
+  define env ~name ~value:v
+
+and execute_for_init env init =
+  match init with
+  | None -> ()
+  | Decl decl -> execute_var_decl env decl
+  | Expr expr -> ignore @@ eval_expr env expr
+
+and execute_loop ?(cond : Ast.expr option = None)
+    ?(step : Ast.expr option = None) ~body env =
+  let cond_v =
+    match cond with None -> Bool true | Some expr -> eval_expr env expr
+  in
+  if is_truthy cond_v then (
+    execute_statement env body;
+    (match step with None -> () | Some expr -> ignore @@ eval_expr env expr);
+    execute_loop ~cond ~step ~body env)
