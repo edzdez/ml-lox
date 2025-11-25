@@ -48,9 +48,9 @@ let assign_at env ({ primary; calls } : Ast.call_expr) (v : value) =
       | _ -> assert false)
   | _ -> assert false
 
-let open_scope env = Hashtbl.create (module String) :: env
+let open_scope (env : t) : t = Hashtbl.create (module String) :: env
 
-let empty () : (string, value) Hashtbl.t list =
+let empty () : t =
   let env = open_scope [] in
   Hashtbl.add_exn (List.hd_exn env) ~key:"clock"
     ~data:

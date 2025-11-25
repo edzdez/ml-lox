@@ -13,8 +13,10 @@ let rec check_declaration (t : Ast.declaration) =
 and check_class ({ body; _ } : Ast.class_decl) =
   List.iter body ~f:check_function
 
-and check_function ({ body; _ } : Ast.func) =
-  List.iter body ~f:check_declaration
+and check_function ({ body; params; pos; _ } : Ast.func) =
+  if List.length params >= 255 then
+    raise (SemantError (pos, "Can't have more than 255 parameters."))
+  else List.iter body ~f:check_declaration
 
 and check_var ({ init; _ } : Ast.var_decl) =
   match init with None -> () | Some expr -> check_expr expr

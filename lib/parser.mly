@@ -109,7 +109,8 @@ funcs:
 
 func:
   | name = IDENTIFIER; LEFT_PAREN; params = parameters; LEFT_BRACE; body = block_body
-    { { name; params; body} }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      { name; params; body; pos } }
   ;
 
 parameters:

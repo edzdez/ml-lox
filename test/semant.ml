@@ -45,3 +45,10 @@ let%expect_test "reject calls with too many arguments" =
       let lexbuf = Lexing.from_channel f in
       check_semant lexbuf);
   [%expect {| :4:3: Can't have more than 255 arguments. |}]
+
+let%expect_test "reject function declarations with too many parameters" =
+  In_channel.with_file "../test_programs/function/too_many_parameters.lox"
+    ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      check_semant lexbuf);
+  [%expect {| :2:5: Can't have more than 255 parameters. |}]

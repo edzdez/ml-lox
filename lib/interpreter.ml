@@ -163,9 +163,26 @@ and execute_statement env (t : Ast.statement) : unit =
 and execute_declaration env (t : Ast.declaration) =
   match t with
   | Ast.Class_decl _ -> assert false
-  | Ast.Func_decl _ -> assert false
+  | Ast.Func_decl f -> execute_func_decl env f
   | Ast.Var_decl v -> execute_var_decl env v
   | Ast.Stmt_decl s -> execute_statement env s
+
+and execute_func_decl env { name; params; body; _ } =
+  define env ~name
+    ~value:
+      (Function
+         {
+           arity = List.length params;
+           string_repr = "<fn " ^ name ^ ">";
+           call =
+             (fun env args ->
+               let env = open_scope @@ [ List.last_exn env ] in
+               let zipped = List.zip_exn params args in
+               List.iter zipped ~f:(fun (name, value) ->
+                   define env ~name ~value);
+               List.iter body ~f:(execute_declaration env);
+               Nil);
+         })
 
 and execute_var_decl env { name; init } =
   let v = match init with None -> Nil | Some e -> eval_expr env e in

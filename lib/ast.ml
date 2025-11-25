@@ -45,7 +45,13 @@ and expr =
 
 type class_decl = { name : string; parent : string option; body : func list }
 and var_decl = { name : string; init : expr option }
-and func = { name : string; params : string list; body : declaration list }
+
+and func = {
+  name : string;
+  params : string list;
+  body : declaration list;
+  pos : position;
+}
 
 and declaration =
   | Class_decl of class_decl

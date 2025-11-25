@@ -301,3 +301,21 @@ let%expect_test "runtime error when calling a non-callable" =
   in
   interpret lexbuf;
   [%expect {| :2:30: Can only call functions and classes. |}]
+
+let%expect_test "can define and call functions" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      fun count(n) {
+          if (n > 1) count (n - 1);
+          print n;
+      }
+      count(3);
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    1
+    2
+    3
+    |}]
