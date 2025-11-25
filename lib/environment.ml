@@ -2,7 +2,10 @@ open! Core
 
 exception EnvError of Ast.position * string
 
-type 'b env = (string, 'b, String.comparator_witness) Map.t
+type 'b env = {
+  locals : (string, 'b, String.comparator_witness) Map.t;
+  globals : (string, 'b) Hashtbl.t;
+}
 
 module Environment_basic : sig
   type ('a, 'b) t = 'b env -> 'a * 'b env
@@ -49,9 +52,12 @@ let get_env : (value ref env, value ref) t = fun env -> (env, env)
 let set_env env : (unit, value ref) t = fun _ -> ((), env)
 
 let find_ref ~name ~pos : (value ref, value ref) t =
- fun env ->
-  match Map.find env name with
-  | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
+ fun ({ locals; globals } as env) ->
+  match Map.find locals name with
+  | None -> (
+      match Hashtbl.find globals name with
+      | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
+      | Some v -> (v, env))
   | Some v -> (v, env)
 
 let find ~name ~pos : (value, value ref) t =
@@ -59,14 +65,25 @@ let find ~name ~pos : (value, value ref) t =
   let%bind ref = find_ref ~name ~pos in
   return !ref
 
-let define ~name ~value : (unit, value ref) t =
- fun env -> ((), Map.update env name ~f:(fun _ -> ref value))
+let define ~global ~name ~value : (unit, value ref) t =
+ fun ({ locals; globals } as env) ->
+  match global with
+  | false ->
+      ((), { locals = Map.update locals name ~f:(fun _ -> ref value); globals })
+  | true ->
+      Hashtbl.update globals name ~f:(fun _ -> ref value);
+      ((), env)
 
 let assign ~name ~value ~pos : (value, value ref) t =
- fun env ->
+ fun ({ locals; globals } as env) ->
   ( value,
-    match Map.find env name with
-    | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
+    match Map.find locals name with
+    | None -> (
+        match Hashtbl.find globals name with
+        | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
+        | Some v ->
+            v := value;
+            env)
     | Some v ->
         v := value;
         env )

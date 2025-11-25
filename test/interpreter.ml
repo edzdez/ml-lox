@@ -2,7 +2,7 @@ open! Core
 
 let interpret lexbuf =
   let ast = Lox.Parser.program Lox.Lexer.read lexbuf in
-  let env = Lox.Util.initial_env in
+  let env = Lox.Util.initial_env () in
   ignore @@ Lox.Util.do_interpret ~env ast
 
 let%expect_test "works with basic arithmetic expressions" =
@@ -359,12 +359,10 @@ let%expect_test "can return within a function" =
     4181
     |}]
 
-(* TODO: the new monadic thingamajig doesn't support this behavior
 let%expect_test "reports a runtime error when returning outside of a function" =
   let lexbuf = Lexing.from_string {| return; |} in
   interpret lexbuf;
   [%expect {| :1:2: Unexpected return. |}]
-*)
 
 let%expect_test "functions are closures" =
   let lexbuf =
@@ -390,3 +388,20 @@ let%expect_test "functions are closures" =
     1
     2
     |}]
+
+let%expect_test "mutual recursion" =
+  In_channel.with_file "../test_programs/function/mutual_recursion.lox"
+    ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      interpret lexbuf);
+  [%expect {|
+    true
+    true
+    |}]
+
+let%expect_test "don't allow local mutual recursion" =
+  In_channel.with_file "../test_programs/function/local_mutual_recursion.lox"
+    ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      interpret lexbuf);
+  [%expect {| :4:12: Undefined variable 'isOdd'. |}]

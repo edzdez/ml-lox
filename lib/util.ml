@@ -1,7 +1,7 @@
 open! Core
 
-let initial_env =
-  Map.of_alist_exn
+let initial_globals () =
+  Hashtbl.of_alist_exn
     (module String)
     [
       ( "clock",
@@ -18,6 +18,9 @@ let initial_env =
                        |> Time_float.Span.to_sec));
              } );
     ]
+
+let initial_env () : Environment.value ref Environment.env =
+  { locals = Map.empty (module String); globals = initial_globals () }
 
 let print_position outx (pos : Lexing.position) =
   fprintf outx "%s:%d:%d" pos.pos_fname pos.pos_lnum
@@ -45,13 +48,10 @@ let do_interpret ~env ast =
   try
     Environment.run ~env
     @@ Environment.foldM ast ~init:Interpreter.Continue ~f:(fun _ decl ->
-        Interpreter.execute_declaration decl)
+        Interpreter.execute_top_level_declaration decl)
   with
   | Interpreter.EvalError (pos, msg) ->
       fprintf stderr "%a: %s\n%!" print_position pos msg;
-      env
-  | Interpreter.Return (pos, _) ->
-      fprintf stderr "%a: Unexpected return.\n%!" print_position pos;
       env
   | Environment.EnvError (pos, msg) ->
       fprintf stderr "%a: %s\n%!" print_position pos msg;

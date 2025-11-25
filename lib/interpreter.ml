@@ -3,7 +3,6 @@ open Environment
 open Environment.Environment_monad.Let_syntax
 
 exception EvalError of Ast.position * string
-exception Return of Ast.position * value
 
 type return = Return of value | Continue
 
@@ -133,17 +132,18 @@ and call ~(callee : value) ~(args : Ast.expr list) ~pos :
   let num_args = List.length arg_vals in
   match callee with
   | Object _ -> assert false
-  | Function { arity; call; _ } -> (
+  | Function { arity; call; _ } ->
       if num_args <> arity then
         raise
           (EvalError
              ( pos,
                "Expected " ^ Int.to_string arity ^ " arguments but got "
                ^ Int.to_string num_args ^ "." ))
-      else try call arg_vals with Return (_, v) -> return v)
+      else call arg_vals
   | _ -> raise (EvalError (pos, "Can only call functions and classes."))
 
-and execute_statement (t : Ast.statement) : (return, value ref) Environment.t =
+and execute_statement ~can_return (t : Ast.statement) :
+    (return, value ref) Environment.t =
   match t with
   | Ast.Expr_stmt e ->
       let%bind _ = eval_expr e in
@@ -151,55 +151,58 @@ and execute_statement (t : Ast.statement) : (return, value ref) Environment.t =
   | Ast.For_stmt { init; cond; step; body } -> (
       let%bind old_env = get_env in
       let%bind () = execute_for_init init in
-      match%bind execute_loop ~cond ~step ~body with
+      match%bind execute_loop ~can_return ~cond ~step ~body with
       | Return _ as x -> return x
       | Continue ->
           let%bind () = set_env old_env in
           return Continue)
   | Ast.If_stmt { cond; consequent; alternative } -> (
       let%bind v = eval_expr cond in
-      if is_truthy v then execute_statement consequent
+      if is_truthy v then execute_statement ~can_return consequent
       else
         match alternative with
         | None -> return Continue
-        | Some alternative -> execute_statement alternative)
+        | Some alternative -> execute_statement ~can_return alternative)
   | Ast.Print_stmt e ->
       let%bind v = eval_expr e in
       printf "%s\n%!" @@ stringify v;
       return Continue
-  | Ast.Return_stmt (expr, _) ->
-      let%bind v =
-        match expr with None -> return Nil | Some expr -> eval_expr expr
-      in
-      return (Return v)
+  | Ast.Return_stmt (expr, pos) -> (
+      match can_return with
+      | false -> raise (EvalError (pos, "Unexpected return."))
+      | true ->
+          let%bind v =
+            match expr with None -> return Nil | Some expr -> eval_expr expr
+          in
+          return (Return v))
   | Ast.While_stmt { cond; body } ->
-      execute_loop ~cond:(Some cond) ~step:None ~body
+      execute_loop ~can_return ~cond:(Some cond) ~step:None ~body
   | Ast.Block_stmt ss ->
       let%bind old_env = get_env in
       let%bind res =
         foldM ss ~init:Continue ~f:(function
           | Return _ as v -> fun _ -> return v
-          | Continue -> fun decl -> execute_declaration decl)
+          | Continue -> fun decl -> execute_declaration ~can_return decl)
       in
       let%bind () = set_env old_env in
       return res
 
-and execute_declaration (t : Ast.declaration) :
+and execute_declaration ~can_return (t : Ast.declaration) :
     (return, value ref) Environment.t =
   match t with
   | Ast.Class_decl _ -> assert false
   | Ast.Func_decl f ->
-      let%bind () = execute_func_decl f in
+      let%bind () = execute_func_decl ~global:false f in
       return Continue
   | Ast.Var_decl v ->
-      let%bind () = execute_var_decl v in
+      let%bind () = execute_var_decl ~global:false v in
       return Continue
-  | Ast.Stmt_decl s -> execute_statement s
+  | Ast.Stmt_decl s -> execute_statement ~can_return s
 
-and execute_func_decl { name; params; body; _ } :
+and execute_func_decl ~global { name; params; body; _ } :
     (unit, value ref) Environment.t =
   let f = Nil in
-  let%bind () = define ~name ~value:f in
+  let%bind () = define ~global ~name ~value:f in
   let%bind ref = find_ref ~name ~pos:Lexing.dummy_pos in
   let%bind closure_env = get_env in
   ref :=
@@ -213,31 +216,33 @@ and execute_func_decl { name; params; body; _ } :
             let%bind () = set_env closure_env in
             let zipped = List.zip_exn params args in
             let%bind _ =
-              mapM zipped ~f:(fun (name, value) -> define ~name ~value)
+              mapM zipped ~f:(fun (name, value) ->
+                  define ~global:false ~name ~value)
             in
             let%bind res =
               foldM body ~init:Continue ~f:(function
                 | Return _ as v -> fun _ -> return v
-                | Continue -> fun decl -> execute_declaration decl)
+                | Continue ->
+                    fun decl -> execute_declaration ~can_return:true decl)
             in
             let%bind _ = set_env old_env in
             match res with Continue -> return Nil | Return v -> return v);
       };
   return ()
 
-and execute_var_decl { name; init } : (unit, value ref) Environment.t =
+and execute_var_decl ~global { name; init } : (unit, value ref) Environment.t =
   let%bind value =
     match init with None -> return Nil | Some e -> eval_expr e
   in
-  define ~name ~value
+  define ~global ~name ~value
 
 and execute_for_init init : (unit, value ref) Environment.t =
   match init with
   | None -> return ()
-  | Decl decl -> execute_var_decl decl
+  | Decl decl -> execute_var_decl ~global:false decl
   | Expr expr -> eval_expr expr >>| ignore
 
-and execute_loop ?(cond : Ast.expr option = None)
+and execute_loop ~can_return ?(cond : Ast.expr option = None)
     ?(step : Ast.expr option = None) ~body : (return, value ref) Environment.t =
   let%bind cond_v =
     match cond with None -> return @@ Bool true | Some expr -> eval_expr expr
@@ -245,10 +250,22 @@ and execute_loop ?(cond : Ast.expr option = None)
   match is_truthy cond_v with
   | false -> return Continue
   | true -> (
-      match%bind execute_statement body with
+      match%bind execute_statement ~can_return body with
       | Continue ->
           let%bind _ =
             match step with None -> return Nil | Some expr -> eval_expr expr
           in
-          execute_loop ~cond ~step ~body
+          execute_loop ~can_return ~cond ~step ~body
       | x -> return x)
+
+and execute_top_level_declaration (t : Ast.declaration) :
+    (return, value ref) Environment.t =
+  match t with
+  | Ast.Class_decl _ -> assert false
+  | Ast.Func_decl f ->
+      let%bind () = execute_func_decl ~global:true f in
+      return Continue
+  | Ast.Var_decl v ->
+      let%bind () = execute_var_decl ~global:true v in
+      return Continue
+  | Ast.Stmt_decl s -> execute_statement ~can_return:false s
