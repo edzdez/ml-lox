@@ -11,6 +11,7 @@ let are_equal v1 v2 =
   | String s1, String s2 -> String.(s1 = s2)
   | Number n1, Number n2 -> Float.(n1 = n2)
   | Object o1, Object o2 -> phys_equal o1 o2
+  | Function f1, Function f2 -> phys_equal f1 f2
   | Nil, Nil -> true
   | _ -> false
 
@@ -22,6 +23,7 @@ let stringify v =
       let s = Float.to_string n in
       if String.is_suffix s ~suffix:"." then String.drop_suffix s 1 else s
   | Object o -> "ref#" ^ Sexp.to_string (sexp_of_lox_object !o)
+  | Function { string_repr; _ } -> string_repr
   | Nil -> "nil"
 
 let rec eval_atom_expr env (expr : Ast.atom_expr) =
@@ -114,9 +116,26 @@ and eval_expr env (expr : Ast.expr) =
       match v with
       | Number n -> Number Float.(-n)
       | _ -> raise (EvalError (pos, "Operand to '-' must be a number.")))
-  | Ast.Call_expr ({ primary; calls }, _pos) -> (
+  | Ast.Call_expr ({ primary; calls }, pos) ->
       let callee = eval_atom_expr env primary in
-      match calls with [] -> callee | _ -> assert false)
+      List.fold_left calls ~init:callee ~f:(fun _callee -> function
+        | Member _ -> assert false
+        | Call args -> call env ~callee ~args ~pos)
+
+and call env ~callee ~args ~pos =
+  let arg_vals = List.map args ~f:(eval_expr env) in
+  let num_args = List.length arg_vals in
+  match callee with
+  | Object _ -> assert false
+  | Function { arity; call; _ } ->
+      if num_args <> arity then
+        raise
+          (EvalError
+             ( pos,
+               "Expected " ^ Int.to_string arity ^ " arguments but got "
+               ^ Int.to_string num_args ^ "." ))
+      else call env arg_vals
+  | _ -> raise (EvalError (pos, "Can only call functions and classes."))
 
 and execute_statement env (t : Ast.statement) : unit =
   match t with

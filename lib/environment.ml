@@ -4,15 +4,23 @@ exception EnvError of Ast.position * string
 
 type lox_object [@@deriving sexp_of]
 
-type value =
+and lox_function = {
+  arity : int;
+  call : t -> value list -> value;
+  string_repr : string;
+}
+[@@deriving sexp_of]
+
+and value =
   | Bool of bool
   | String of string
   | Number of float
   | Object of lox_object ref
+  | Function of lox_function
   | Nil
 [@@deriving sexp_of]
 
-type t = (string, value) Hashtbl.t list
+and t = (string, value) Hashtbl.t list
 
 let rec find env ~name ~pos : value =
   match env with
@@ -41,4 +49,19 @@ let assign_at env ({ primary; calls } : Ast.call_expr) (v : value) =
   | _ -> assert false
 
 let open_scope env = Hashtbl.create (module String) :: env
-let empty () = open_scope []
+
+let empty () : (string, value) Hashtbl.t list =
+  let env = open_scope [] in
+  Hashtbl.add_exn (List.hd_exn env) ~key:"clock"
+    ~data:
+      (Function
+         {
+           arity = 0;
+           string_repr = "<native fn>";
+           call =
+             (fun _ _ ->
+               Number
+                 (Time_float.now () |> Time_float.to_span_since_epoch
+                |> Time_float.Span.to_sec));
+         });
+  env

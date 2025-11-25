@@ -292,3 +292,12 @@ let%expect_test "for loop scoping" =
     10
     :6:13: Undefined variable 'i'.
     |}]
+
+let%expect_test "runtime error when calling a non-callable" =
+  let lexbuf =
+    Lexing.from_string {|
+      "totally not a function"();
+      |}
+  in
+  interpret lexbuf;
+  [%expect {| :2:30: Can only call functions and classes. |}]
