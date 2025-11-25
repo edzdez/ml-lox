@@ -7,7 +7,7 @@ let rec check_declaration (t : Ast.declaration) =
   match t with
   | Ast.Class_decl t -> check_class t
   | Ast.Func_decl t -> check_function t
-  | Ast.Var_decl t -> check_var t
+  | Ast.Var_decl (t, _) -> check_var t
   | Ast.Stmt_decl t -> check_statement t
 
 and check_class ({ body; _ } : Ast.class_decl) =

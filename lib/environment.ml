@@ -3,7 +3,7 @@ open! Core
 exception EnvError of Ast.position * string
 
 type 'b env = {
-  locals : (string, 'b, String.comparator_witness) Map.t;
+  locals : (string, 'b, String.comparator_witness) Map.t list;
   globals : (string, 'b) Hashtbl.t;
 }
 
@@ -51,42 +51,68 @@ and value =
 let get_env : (value ref env, value ref) t = fun env -> (env, env)
 let set_env env : (unit, value ref) t = fun _ -> ((), env)
 
+let open_scope : (unit, value ref) t =
+ fun { locals; globals } ->
+  ((), { locals = Map.empty (module String) :: locals; globals })
+
+let close_scope : (unit, value ref) t =
+ fun { locals; globals } ->
+  match locals with
+  | [] -> assert false
+  | _ :: tl -> ((), { locals = tl; globals })
+
 let find_ref ~name ~pos : (value ref, value ref) t =
  fun ({ locals; globals } as env) ->
-  match Map.find locals name with
-  | None -> (
-      match Hashtbl.find globals name with
-      | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
-      | Some v -> (v, env))
-  | Some v -> (v, env)
+  let rec aux locals =
+    match locals with
+    | [] -> (
+        match Hashtbl.find globals name with
+        | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
+        | Some v -> (v, env))
+    | hd :: tl -> (
+        match Map.find hd name with None -> aux tl | Some v -> (v, env))
+  in
+  aux locals
 
 let find ~name ~pos : (value, value ref) t =
   let open Environment_monad.Let_syntax in
   let%bind ref = find_ref ~name ~pos in
   return !ref
 
-let define ~global ~name ~value : (unit, value ref) t =
+let define ~name ~value ~pos : (unit, value ref) t =
  fun ({ locals; globals } as env) ->
-  match global with
-  | false ->
-      ((), { locals = Map.update locals name ~f:(fun _ -> ref value); globals })
-  | true ->
+  match locals with
+  | [] ->
       Hashtbl.update globals name ~f:(fun _ -> ref value);
       ((), env)
+  | hd :: tl ->
+      let hd' =
+        Map.update hd name ~f:(function
+          | None -> ref value
+          | Some _ ->
+              raise
+                (EnvError (pos, "Redefinition of '" ^ name ^ "' in this scope.")))
+      in
+      ((), { locals = hd' :: tl; globals })
 
 let assign ~name ~value ~pos : (value, value ref) t =
  fun ({ locals; globals } as env) ->
-  ( value,
-    match Map.find locals name with
-    | None -> (
+  let rec aux locals =
+    match locals with
+    | [] -> (
         match Hashtbl.find globals name with
         | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
         | Some v ->
             v := value;
-            env)
-    | Some v ->
-        v := value;
-        env )
+            (value, env))
+    | hd :: tl -> (
+        match Map.find hd name with
+        | None -> aux tl
+        | Some v ->
+            v := value;
+            (value, env))
+  in
+  aux locals
 
 let assign_at ~lvalue:({ primary; calls } : Ast.call_expr) ~value :
     (value, value ref) t =

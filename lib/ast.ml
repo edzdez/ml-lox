@@ -55,7 +55,7 @@ and func = {
 and declaration =
   | Class_decl of class_decl
   | Func_decl of func
-  | Var_decl of var_decl
+  | Var_decl of var_decl * position
   | Stmt_decl of statement
 
 and for_init_t = Decl of var_decl | Expr of expr | None

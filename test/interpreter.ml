@@ -405,3 +405,10 @@ let%expect_test "don't allow local mutual recursion" =
       let lexbuf = Lexing.from_channel f in
       interpret lexbuf);
   [%expect {| :4:12: Undefined variable 'isOdd'. |}]
+
+let%expect_test "reject duplicate declarations in the same local scope" =
+  In_channel.with_file "../test_programs/variable/duplicate_local.lox"
+    ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      interpret lexbuf);
+  [%expect {| :3:3: Redefinition of 'a' in this scope. |}]

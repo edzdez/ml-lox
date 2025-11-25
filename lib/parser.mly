@@ -88,7 +88,8 @@ declaration:
   | FUN; f = func
     { Func_decl f }
   | VAR; name = IDENTIFIER; init = var_init;
-    { Var_decl { name; init } }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Var_decl ({ name; init }, pos) }
   | stmt = statement
     { Stmt_decl stmt }
   ;

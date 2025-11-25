@@ -150,10 +150,12 @@ and execute_statement ~can_return (t : Ast.statement) :
       return Continue
   | Ast.For_stmt { init; cond; step; body } -> (
       let%bind old_env = get_env in
+      let%bind () = open_scope in
       let%bind () = execute_for_init init in
       match%bind execute_loop ~can_return ~cond ~step ~body with
       | Return _ as x -> return x
       | Continue ->
+          let%bind () = close_scope in
           let%bind () = set_env old_env in
           return Continue)
   | Ast.If_stmt { cond; consequent; alternative } -> (
@@ -179,11 +181,13 @@ and execute_statement ~can_return (t : Ast.statement) :
       execute_loop ~can_return ~cond:(Some cond) ~step:None ~body
   | Ast.Block_stmt ss ->
       let%bind old_env = get_env in
+      let%bind () = open_scope in
       let%bind res =
         foldM ss ~init:Continue ~f:(function
           | Return _ as v -> fun _ -> return v
           | Continue -> fun decl -> execute_declaration ~can_return decl)
       in
+      let%bind () = close_scope in
       let%bind () = set_env old_env in
       return res
 
@@ -192,17 +196,17 @@ and execute_declaration ~can_return (t : Ast.declaration) :
   match t with
   | Ast.Class_decl _ -> assert false
   | Ast.Func_decl f ->
-      let%bind () = execute_func_decl ~global:false f in
+      let%bind () = execute_func_decl f in
       return Continue
-  | Ast.Var_decl v ->
-      let%bind () = execute_var_decl ~global:false v in
+  | Ast.Var_decl (v, pos) ->
+      let%bind () = execute_var_decl ~pos v in
       return Continue
   | Ast.Stmt_decl s -> execute_statement ~can_return s
 
-and execute_func_decl ~global { name; params; body; _ } :
+and execute_func_decl { name; params; body; pos } :
     (unit, value ref) Environment.t =
   let f = Nil in
-  let%bind () = define ~global ~name ~value:f in
+  let%bind () = define ~name ~value:f ~pos in
   let%bind ref = find_ref ~name ~pos:Lexing.dummy_pos in
   let%bind closure_env = get_env in
   ref :=
@@ -214,10 +218,10 @@ and execute_func_decl ~global { name; params; body; _ } :
           (fun args ->
             let%bind old_env = get_env in
             let%bind () = set_env closure_env in
+            let%bind () = open_scope in
             let zipped = List.zip_exn params args in
             let%bind _ =
-              mapM zipped ~f:(fun (name, value) ->
-                  define ~global:false ~name ~value)
+              mapM zipped ~f:(fun (name, value) -> define ~name ~value ~pos)
             in
             let%bind res =
               foldM body ~init:Continue ~f:(function
@@ -225,21 +229,22 @@ and execute_func_decl ~global { name; params; body; _ } :
                 | Continue ->
                     fun decl -> execute_declaration ~can_return:true decl)
             in
+            let%bind () = close_scope in
             let%bind _ = set_env old_env in
             match res with Continue -> return Nil | Return v -> return v);
       };
   return ()
 
-and execute_var_decl ~global { name; init } : (unit, value ref) Environment.t =
+and execute_var_decl ~pos { name; init } : (unit, value ref) Environment.t =
   let%bind value =
     match init with None -> return Nil | Some e -> eval_expr e
   in
-  define ~global ~name ~value
+  define ~name ~value ~pos
 
 and execute_for_init init : (unit, value ref) Environment.t =
   match init with
   | None -> return ()
-  | Decl decl -> execute_var_decl ~global:false decl
+  | Decl decl -> execute_var_decl ~pos:Lexing.dummy_pos decl
   | Expr expr -> eval_expr expr >>| ignore
 
 and execute_loop ~can_return ?(cond : Ast.expr option = None)
@@ -257,15 +262,3 @@ and execute_loop ~can_return ?(cond : Ast.expr option = None)
           in
           execute_loop ~can_return ~cond ~step ~body
       | x -> return x)
-
-and execute_top_level_declaration (t : Ast.declaration) :
-    (return, value ref) Environment.t =
-  match t with
-  | Ast.Class_decl _ -> assert false
-  | Ast.Func_decl f ->
-      let%bind () = execute_func_decl ~global:true f in
-      return Continue
-  | Ast.Var_decl v ->
-      let%bind () = execute_var_decl ~global:true v in
-      return Continue
-  | Ast.Stmt_decl s -> execute_statement ~can_return:false s

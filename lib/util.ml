@@ -20,7 +20,7 @@ let initial_globals () =
     ]
 
 let initial_env () : Environment.value ref Environment.env =
-  { locals = Map.empty (module String); globals = initial_globals () }
+  { locals = []; globals = initial_globals () }
 
 let print_position outx (pos : Lexing.position) =
   fprintf outx "%s:%d:%d" pos.pos_fname pos.pos_lnum
@@ -48,7 +48,7 @@ let do_interpret ~env ast =
   try
     Environment.run ~env
     @@ Environment.foldM ast ~init:Interpreter.Continue ~f:(fun _ decl ->
-        Interpreter.execute_top_level_declaration decl)
+        Interpreter.execute_declaration ~can_return:false decl)
   with
   | Interpreter.EvalError (pos, msg) ->
       fprintf stderr "%a: %s\n%!" print_position pos msg;
