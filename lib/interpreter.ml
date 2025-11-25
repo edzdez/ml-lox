@@ -201,6 +201,7 @@ and execute_func_decl { name; params; body; _ } :
   let f = Nil in
   let%bind () = define ~name ~value:f in
   let%bind ref = find_ref ~name ~pos:Lexing.dummy_pos in
+  let%bind closure_env = get_env in
   ref :=
     Function
       {
@@ -209,6 +210,7 @@ and execute_func_decl { name; params; body; _ } :
         call =
           (fun args ->
             let%bind old_env = get_env in
+            let%bind () = set_env closure_env in
             let zipped = List.zip_exn params args in
             let%bind _ =
               mapM zipped ~f:(fun (name, value) -> define ~name ~value)
