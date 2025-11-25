@@ -169,7 +169,7 @@ and execute_statement ~can_return (t : Ast.statement) :
       return Continue
   | Ast.Return_stmt (expr, pos) -> (
       match can_return with
-      | false -> raise (EvalError (pos, "Unexpected return."))
+      | false -> raise (EvalError (pos, "Can't return from top-level code."))
       | true ->
           let%bind v =
             match expr with None -> return Nil | Some expr -> eval_expr expr

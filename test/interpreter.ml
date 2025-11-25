@@ -362,7 +362,7 @@ let%expect_test "can return within a function" =
 let%expect_test "reports a runtime error when returning outside of a function" =
   let lexbuf = Lexing.from_string {| return; |} in
   interpret lexbuf;
-  [%expect {| :1:2: Unexpected return. |}]
+  [%expect {| :1:2: Can't return from top-level code. |}]
 
 let%expect_test "functions are closures" =
   let lexbuf =
