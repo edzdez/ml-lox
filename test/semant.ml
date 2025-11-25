@@ -38,3 +38,10 @@ let%expect_test "reject assignments to non-lvalues" =
     :5:7: Expected lvalue before '='.
     :6:7: Expected lvalue before '='.
     |}]
+
+let%expect_test "reject calls with too many arguments" =
+  In_channel.with_file "../test_programs/function/too_many_arguments.lox"
+    ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      check_semant lexbuf);
+  [%expect {| :4:3: Can't have more than 255 arguments. |}]

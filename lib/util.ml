@@ -22,8 +22,7 @@ let do_semant decl =
     fprintf stderr "%a: %s\n%!" print_position pos msg;
     false
 
-let do_interpret ast =
-  let env = Environment.empty () in
+let do_interpret ~env ast =
   try
     List.iter ast ~f:(fun decl -> Interpreter.execute_declaration env decl)
   with

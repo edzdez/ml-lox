@@ -94,12 +94,17 @@ and check_expr e =
       check_expr e2
   | Ast.Neg_expr (e, _) -> check_expr e
   | Ast.Minus_expr (e, _) -> check_expr e
-  | Ast.Call_expr ({ primary; calls }, _) ->
+  | Ast.Call_expr ({ primary; calls }, loc) ->
       check_atom_expr primary;
-      List.iter calls ~f:check_call_t
+      List.iter calls ~f:(check_call_t ~loc)
 
 and check_atom_expr e =
   match e with Ast.Expr_expr (e, _) -> check_expr e | _ -> ()
 
-and check_call_t t =
-  match t with Ast.Call xs -> List.iter xs ~f:check_expr | Ast.Member _ -> ()
+and check_call_t ~loc t =
+  match t with
+  | Ast.Call args ->
+      if List.length args >= 255 then
+        raise (SemantError (loc, "Can't have more than 255 arguments."))
+      else List.iter args ~f:check_expr
+  | Ast.Member _ -> ()
