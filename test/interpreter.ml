@@ -2,8 +2,8 @@ open! Core
 
 let interpret lexbuf =
   let ast = Lox.Parser.program Lox.Lexer.read lexbuf in
-  let env = Lox.Environment.empty () in
-  Lox.Util.do_interpret ~env ast
+  let env = Lox.Util.initial_env in
+  ignore @@ Lox.Util.do_interpret ~env ast
 
 let%expect_test "works with basic arithmetic expressions" =
   let lexbuf =

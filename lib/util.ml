@@ -1,5 +1,24 @@
 open! Core
 
+let initial_env =
+  Map.of_alist_exn
+    (module String)
+    [
+      ( "clock",
+        ref
+        @@ Environment.Function
+             {
+               arity = 0;
+               string_repr = "<native fn>";
+               call =
+                 (fun _ ->
+                   Environment.return
+                   @@ Environment.Number
+                        (Time_float.now () |> Time_float.to_span_since_epoch
+                       |> Time_float.Span.to_sec));
+             } );
+    ]
+
 let print_position outx (pos : Lexing.position) =
   fprintf outx "%s:%d:%d" pos.pos_fname pos.pos_lnum
     (pos.pos_cnum - pos.pos_bol + 1)
@@ -24,14 +43,19 @@ let do_semant decl =
 
 let do_interpret ~env ast =
   try
-    List.iter ast ~f:(fun decl -> Interpreter.execute_declaration env decl)
+    Environment.run ~env
+    @@ Environment.foldM ast ~init:Interpreter.Continue ~f:(fun _ decl ->
+        Interpreter.execute_declaration decl)
   with
   | Interpreter.EvalError (pos, msg) ->
-      fprintf stderr "%a: %s\n%!" print_position pos msg
+      fprintf stderr "%a: %s\n%!" print_position pos msg;
+      env
   | Interpreter.Return (pos, _) ->
-      fprintf stderr "%a: Unexpected return.\n%!" print_position pos
+      fprintf stderr "%a: Unexpected return.\n%!" print_position pos;
+      env
   | Environment.EnvError (pos, msg) ->
-      fprintf stderr "%a: %s\n%!" print_position pos msg
+      fprintf stderr "%a: %s\n%!" print_position pos msg;
+      env
 
 let string_of_token (t : Parser.token) =
   match t with

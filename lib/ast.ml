@@ -22,7 +22,6 @@ and atom_expr =
   | Var_expr of string * position
   | Super_expr of string * position
   | Expr_expr of expr * position
-[@@deriving sexp_of]
 
 and expr =
   | Assign_expr of assign_expr * position
