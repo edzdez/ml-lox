@@ -4,11 +4,11 @@ exception SemantError of Ast.position * string
 
 (* We really, only check that assignment is to valid lvalues... *)
 let rec check_declaration ?(is_init = false) ?(in_class = false)
-    (t : Ast.declaration) =
+    ?(curr_scope = None) (t : Ast.declaration) =
   match t with
   | Ast.Class_decl (t, _) -> check_class t
   | Ast.Func_decl t -> check_function ~is_init ~in_class t
-  | Ast.Var_decl (t, _) -> check_var t
+  | Ast.Var_decl (t, pos) -> check_var ~curr_scope ~pos t
   | Ast.Stmt_decl t -> check_statement ~is_init ~in_class t
 
 and check_class ({ body; _ } : Ast.class_decl) =
@@ -19,9 +19,18 @@ and check_function ~is_init ?(in_class = false)
     ({ body; params; pos; _ } : Ast.func) =
   if List.length params >= 255 then
     raise (SemantError (pos, "Can't have more than 255 parameters."))
-  else List.iter body ~f:(check_declaration ~is_init ~in_class)
+  else
+    let curr_scope = Some (Hash_set.create (module String)) in
+    List.iter body ~f:(check_declaration ~is_init ~in_class ~curr_scope)
 
-and check_var ({ init; _ } : Ast.var_decl) =
+and check_var ~curr_scope ~pos ({ name; init } : Ast.var_decl) =
+  (match curr_scope with
+  | None -> ()
+  | Some scope ->
+      if Hash_set.mem scope name then
+        raise
+          (SemantError (pos, sprintf "Redefinition of '%s' in this scope." name))
+      else Hash_set.add scope name);
   match init with None -> () | Some expr -> check_expr expr
 
 and check_statement ~is_init ?(in_class = false) s =
@@ -53,7 +62,9 @@ and check_statement ~is_init ?(in_class = false) s =
   | Ast.While_stmt { cond; body } ->
       check_expr cond;
       check_statement ~is_init body
-  | Ast.Block_stmt decls -> List.iter decls ~f:check_declaration
+  | Ast.Block_stmt decls ->
+      let curr_scope = Some (Hash_set.create (module String)) in
+      List.iter decls ~f:(check_declaration ~curr_scope)
 
 and check_expr ?(in_class = false) e =
   match e with

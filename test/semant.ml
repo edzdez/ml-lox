@@ -89,3 +89,18 @@ let%expect_test "reject invalid uses of this" =
   let lexbuf = Lexing.from_string {| this; |} in
   check_semant lexbuf;
   [%expect {| :1:2: Can't use 'this' outside of a class. |}]
+
+let%expect_test "reject duplicate declarations of local variables" =
+  In_channel.with_file "../test_programs/variable/duplicate_local.lox"
+    ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      check_semant lexbuf);
+  [%expect {| :3:3: Redefinition of 'a' in this scope. |}]
+
+let%expect_test "allow duplicate declarations of global variables" =
+  let lexbuf = Lexing.from_string {|
+      var a;
+      var a;
+      |} in
+  check_semant lexbuf;
+  [%expect {| |}]
