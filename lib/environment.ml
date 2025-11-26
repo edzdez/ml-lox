@@ -62,22 +62,27 @@ let bind { locals; globals } ~name ~value =
     globals;
   }
 
+let rec find_method_from_class ~name = function
+  | None -> None
+  | Some c -> (
+      match Hashtbl.find c.methods name with
+      | None -> find_method_from_class ~name c.parent
+      | Some m -> Some m)
+
+let find_method_from_class_exn ~name ?(pos = Lexing.dummy_pos) c =
+  match find_method_from_class ~name c with
+  | None -> raise (EnvError (pos, sprintf "Undefined property '%s'." name))
+  | Some m -> m
+
 let find_method (o : lox_object ref) ~name =
-  let rec find_method = function
-    | None -> None
-    | Some c -> (
-        match Hashtbl.find c.methods name with
-        | None -> find_method c.parent
-        | Some m -> Some m)
-  in
   let open Option.Let_syntax in
-  let%bind m = find_method (Some !o.base) in
+  let%bind m = find_method_from_class ~name (Some !o.base) in
   return @@ m o
 
 let find_method_exn ~name ?(pos = Lexing.dummy_pos) (o : lox_object ref) =
   match find_method o ~name with
-  | Some m -> m
   | None -> raise (EnvError (pos, sprintf "Undefined property '%s'." name))
+  | Some m -> m
 
 let get_env : (value ref env, value ref) t = fun env -> (env, env)
 let set_env env : (unit, value ref) t = fun _ -> ((), env)

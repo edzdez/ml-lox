@@ -41,7 +41,23 @@ let rec eval_atom_expr expr : (value, value ref) Environment.t =
   | Ast.Number_expr n -> return @@ Number n
   | Ast.String_expr s -> return @@ String s
   | Ast.Var_expr (name, pos) -> find_exn ~name ~kind:"variable" ~pos
-  | Ast.Super_expr (_e, _) -> assert false
+  | Ast.Super_expr (name, pos) ->
+      let%bind superclass =
+        match%bind find ~name:"super" with
+        | None ->
+            raise
+              (EvalError
+                 (pos, "Can't use 'super' in a class with no superclass."))
+        | Some (Class c) -> return c
+        | _ -> assert false
+      in
+      let%bind this =
+        match%bind find_exn ~name:"this" ~kind:"unreachable" with
+        | Object o -> return o
+        | _ -> assert false
+      in
+      let m = find_method_from_class_exn ~name ~pos (Some superclass) in
+      return (Function (m this))
   | Ast.Expr_expr (e, _) -> eval_expr e
 
 and eval_expr expr : (value, value ref) Environment.t =
@@ -263,6 +279,11 @@ and execute_class_decl { name; parent; body } ~pos :
   let%bind () = define ~name ~value:c ~pos in
   let%bind c_ref = find_ref_exn ~name in
   let%bind env = get_env in
+  let super_env =
+    match parent with
+    | None -> env
+    | Some parent -> bind env ~name:"super" ~value:(Class parent)
+  in
   let arity = ref 0 in
   let methods =
     List.map body ~f:(fun ({ name; params; _ } as f) ->
@@ -270,8 +291,8 @@ and execute_class_decl { name; parent; body } ~pos :
         if is_init then arity := List.length params;
         ( name,
           fun o ->
-            let new_env = bind env ~name:"this" ~value:(Object o) in
-            create_function f ~is_init ~env:new_env ))
+            let this_env = bind super_env ~name:"this" ~value:(Object o) in
+            create_function f ~is_init ~env:this_env ))
   in
   c_ref :=
     Class

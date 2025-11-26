@@ -597,3 +597,92 @@ let%expect_test "inherits methods" =
   in
   interpret lexbuf;
   [%expect {| Fry until golden brown. |}]
+
+let%expect_test "can call overridden methods with super" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      class Doughnut {
+        cook() {
+          print "Fry until golden brown.";
+        }
+      }
+
+      class BostonCream < Doughnut {
+        cook() {
+          super.cook();
+          print "Pipe full of custard and coat with chocolate.";
+        }
+      }
+
+      BostonCream().cook();
+      |}
+  in
+  interpret lexbuf;
+  [%expect
+    {|
+    Fry until golden brown.
+    Pipe full of custard and coat with chocolate.
+    |}]
+
+let%expect_test "super finds the right class" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      class A {
+        method() {
+          print "A method";
+        }
+      }
+
+      class B < A {
+        method() {
+          print "B method";
+        }
+
+        test() {
+          super.method();
+        }
+      }
+
+      class C < B {}
+
+      C().test();
+      |}
+  in
+  interpret lexbuf;
+  [%expect {| A method |}]
+
+let%expect_test "runtime error when using super in a class with no parent" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      class Foo {
+        bar() {
+          super.bar();
+        }
+      }
+
+      Foo().bar();
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| :4:11: Can't use 'super' in a class with no superclass. |}]
+
+let%expect_test "runtime error when using superclass lacks method" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      class Foo {}
+
+      class Bar < Foo {
+        bar() {
+            super.foo();
+        }
+      }
+
+      Bar().bar();
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| :6:13: Undefined property 'foo'. |}]
