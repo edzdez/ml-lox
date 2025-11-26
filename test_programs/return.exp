@@ -1,0 +1,7 @@
+ok
+ok
+ok
+./return/at_top_level.lox:1:1: Can't return from top-level code.
+ok
+ok
+nil

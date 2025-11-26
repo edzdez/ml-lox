@@ -1,0 +1,14 @@
+./while/class_in_body.lox:2:19: Expected <statement> after ')'.
+1
+2
+3
+./while/fun_in_body.lox:2:17: Expected <statement> after ')'.
+i
+i
+1
+2
+3
+0
+1
+2
+./while/var_in_body.lox:2:17: Expected <statement> after ')'.

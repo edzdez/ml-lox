@@ -1,0 +1,9 @@
+Foo
+./class/inherit_self.lox:1:1: A class can't inherit from itself.
+in foo
+in bar
+in baz
+B
+./class/local_inherit_self.lox:2:3: A class can't inherit from itself.
+Foo
+Foo

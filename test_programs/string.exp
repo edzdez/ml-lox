@@ -1,0 +1,8 @@
+./string/error_after_multiline.lox:4:1: Undefined variable 'err'.
+()
+a string
+A~¶Þॐஃ
+1
+2
+3
+./string/unterminated.lox:2:32: Unterminated string.

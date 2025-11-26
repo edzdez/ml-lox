@@ -1,0 +1,17 @@
+no args
+1
+3
+6
+10
+15
+21
+28
+36
+nil
+./method/extra_arguments.lox:8:1: Expected 2 arguments but got 4.
+./method/missing_arguments.lox:5:1: Expected 2 arguments but got 1.
+./method/not_found.lox:3:1: Undefined property 'unknown'.
+<fn method>
+./method/refer_to_name.lox:3:11: Undefined variable 'method'.
+./method/too_many_arguments.lox:3:3: Can't have more than 255 arguments.
+./method/too_many_parameters.lox:3:3: Can't have more than 255 parameters.

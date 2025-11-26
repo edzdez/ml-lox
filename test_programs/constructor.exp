@@ -1,0 +1,20 @@
+init
+1
+2
+init
+init
+Foo instance
+Foo.init(one)
+Foo.init(two)
+Foo instance
+init
+Foo instance
+./constructor/default_arguments.lox:3:11: Expected 0 arguments but got 3.
+init
+Foo instance
+./constructor/extra_arguments.lox:8:11: Expected 2 arguments but got 4.
+not initializer
+./constructor/missing_arguments.lox:5:11: Expected 2 arguments but got 1.
+bar
+Foo instance
+./constructor/return_value.lox:3:5: Can't use a nonempty return from an initializer
