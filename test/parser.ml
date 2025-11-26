@@ -32,12 +32,12 @@ let%expect_test "assignment is right associative" =
 let%expect_test "allows the empty class" =
   let lexbuf = Lexing.from_string "class Foo {}" in
   List.iter ~f:(Lox.Ast.print ~outx:stdout) @@ parse_with_error lexbuf;
-  [%expect {| (Class_decl((name Foo)(parent())(body()))) |}]
+  [%expect {| (Class_decl((name Foo)(parent())(body()))pos) |}]
 
 let%expect_test "class inheritance" =
   let lexbuf = Lexing.from_string "class Foo < Bar {}" in
   List.iter ~f:(Lox.Ast.print ~outx:stdout) @@ parse_with_error lexbuf;
-  [%expect {| (Class_decl((name Foo)(parent(Bar))(body()))) |}]
+  [%expect {| (Class_decl((name Foo)(parent(Bar))(body()))pos) |}]
 
 let%expect_test "for loops behave" =
   let lexbuf =

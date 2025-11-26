@@ -25,7 +25,8 @@ let stringify v =
   | Number n ->
       let s = Float.to_string n in
       if String.is_suffix s ~suffix:"." then String.drop_suffix s 1 else s
-  | Object _o -> "ref#"
+  | Object _ -> assert false
+  | Class { name; _ } -> name
   | Function { string_repr; _ } -> string_repr
   | Nil -> "nil"
 
@@ -194,7 +195,9 @@ and execute_statement ~can_return (t : Ast.statement) :
 and execute_declaration ~can_return (t : Ast.declaration) :
     (return, value ref) Environment.t =
   match t with
-  | Ast.Class_decl _ -> assert false
+  | Ast.Class_decl (c, pos) ->
+      let%bind () = execute_class_decl c ~pos in
+      return Continue
   | Ast.Func_decl f ->
       let%bind () = execute_func_decl f in
       return Continue
@@ -202,6 +205,14 @@ and execute_declaration ~can_return (t : Ast.declaration) :
       let%bind () = execute_var_decl ~pos v in
       return Continue
   | Ast.Stmt_decl s -> execute_statement ~can_return s
+
+and execute_class_decl { name; _ } ~pos : (unit, value ref) Environment.t =
+  let c = Nil in
+  let%bind () = define ~name ~value:c ~pos in
+  let%bind ref = find_ref ~name ~pos:Lexing.dummy_pos in
+  (* let%bind class_env = get_env in *)
+  ref := Class { name };
+  return ()
 
 and execute_func_decl { name; params; body; pos } :
     (unit, value ref) Environment.t =

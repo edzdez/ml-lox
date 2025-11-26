@@ -412,3 +412,25 @@ let%expect_test "reject duplicate declarations in the same local scope" =
       let lexbuf = Lexing.from_channel f in
       interpret lexbuf);
   [%expect {| :3:3: Redefinition of 'a' in this scope. |}]
+
+let%expect_test "print functions and classes" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      fun foo() { }
+
+      class DevonshireCream {
+        serveOn() {
+          return "Scones";
+        }
+      }
+
+      print DevonshireCream;
+      print foo;
+      |}
+  in
+  interpret lexbuf;
+  [%expect {|
+    DevonshireCream
+    <fn foo>
+    |}]

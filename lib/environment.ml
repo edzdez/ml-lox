@@ -34,6 +34,8 @@ module Environment_monad = Monad.Make2 (Environment_basic)
 
 type lox_object
 
+type lox_class = { name : string }
+
 and lox_function = {
   arity : int;
   call : value list -> (value, value ref) t;
@@ -45,6 +47,7 @@ and value =
   | String of string
   | Number of float
   | Object of lox_object ref
+  | Class of lox_class
   | Function of lox_function
   | Nil
 

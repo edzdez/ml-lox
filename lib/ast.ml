@@ -53,7 +53,7 @@ and func = {
 }
 
 and declaration =
-  | Class_decl of class_decl
+  | Class_decl of class_decl * position
   | Func_decl of func
   | Var_decl of var_decl * position
   | Stmt_decl of statement

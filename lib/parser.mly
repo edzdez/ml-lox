@@ -84,7 +84,8 @@ program:
 
 declaration:
   | CLASS; name = IDENTIFIER; parent = inherits; body = funcs
-    { Class_decl { name; parent; body } }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      Class_decl ({ name; parent; body }, pos) }
   | FUN; f = func
     { Func_decl f }
   | VAR; name = IDENTIFIER; init = var_init;

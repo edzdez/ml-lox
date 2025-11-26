@@ -5,7 +5,7 @@ exception SemantError of Ast.position * string
 (* We really, only check that assignment is to valid lvalues... *)
 let rec check_declaration (t : Ast.declaration) =
   match t with
-  | Ast.Class_decl t -> check_class t
+  | Ast.Class_decl (t, _) -> check_class t
   | Ast.Func_decl t -> check_function t
   | Ast.Var_decl (t, _) -> check_var t
   | Ast.Stmt_decl t -> check_statement t
