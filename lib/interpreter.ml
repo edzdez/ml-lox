@@ -308,7 +308,7 @@ and create_function ?(is_init = false) ~env { name; params; body; pos } =
         | Continue, false ->
             let%bind () = set_env old_env in
             return Nil
-        | Continue, true ->
+        | _, true ->
             let%bind this =
               find_exn ~name:"this" ~kind:"unreachable" ~pos:Lexing.dummy_pos
             in

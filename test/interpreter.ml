@@ -547,3 +547,20 @@ let%expect_test "runtime error when constructor arity is wrong" =
   in
   interpret lexbuf;
   [%expect {| :8:13: Expected 1 arguments but got 0. |}]
+
+let%expect_test "empty return in initializer return 'this'" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Foo {
+      init(x) {
+          return;
+      }
+    }
+
+    var f = Foo(10);
+    print f.init(1);
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| Foo instance |}]
