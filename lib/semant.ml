@@ -20,7 +20,18 @@ and check_function ~is_init ?(in_class = false)
   if List.length params >= 255 then
     raise (SemantError (pos, "Can't have more than 255 parameters."))
   else
-    let curr_scope = Some (Hash_set.create (module String)) in
+    let scope =
+      List.fold_right params
+        ~init:(Hash_set.create (module String))
+        ~f:(fun name acc ->
+          if Hash_set.mem acc name then
+            raise
+              (SemantError
+                 (pos, sprintf "Redefinition of '%s' in this scope." name))
+          else Hash_set.add acc name;
+          acc)
+    in
+    let curr_scope = Some scope in
     List.iter body ~f:(check_declaration ~is_init ~in_class ~curr_scope)
 
 and check_var ~curr_scope ~pos ({ name; init } : Ast.var_decl) =

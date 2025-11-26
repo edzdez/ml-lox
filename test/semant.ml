@@ -104,3 +104,10 @@ let%expect_test "allow duplicate declarations of global variables" =
       |} in
   check_semant lexbuf;
   [%expect {| |}]
+
+let%expect_test "reject duplicate declarations of function parameters" =
+  In_channel.with_file "../test_programs/variable/duplicate_parameter.lox"
+    ~f:(fun f ->
+      let lexbuf = Lexing.from_channel f in
+      check_semant lexbuf);
+  [%expect {| :1:5: Redefinition of 'arg' in this scope. |}]

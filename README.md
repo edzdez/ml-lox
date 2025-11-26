@@ -39,6 +39,4 @@ My implementation differs in some ways from Rob Nystrom's:
     print a;
   }
   ```
-  The original semantics reject this fragment of code, but I'm of the opinion that it's perfectly reasonable.
-  Hence, my implementation allows it.
-- Since I don't use a resolver, I don't (currently) check for duplicate declarations statically; they are instead handled dynamically.
+  The original semantics reject this fragment of code, but I'm of the opinion that it's perfectly reasonable, so my implementation allows it.
