@@ -6,6 +6,8 @@ exception EvalError of Ast.position * string
 
 type return = Return of value | Continue
 
+let error ~pos msg = raise (EvalError (pos, msg))
+let f_or_nil ~f = function None -> return Nil | Some v -> f v
 let is_truthy v = match v with Bool b -> b | Nil -> false | _ -> true
 
 let are_equal v1 v2 =
@@ -36,7 +38,7 @@ let rec eval_atom_expr expr : (value, value ref) Environment.t =
   | Ast.Nil_expr -> return @@ Nil
   | Ast.This_expr pos -> (
       match%bind find ~name:"this" with
-      | None -> raise (EvalError (pos, "Can't use 'this' outside of a class."))
+      | None -> error ~pos "Can't use 'this' outside of a class."
       | Some v -> return v)
   | Ast.Number_expr n -> return @@ Number n
   | Ast.String_expr s -> return @@ String s
@@ -44,10 +46,7 @@ let rec eval_atom_expr expr : (value, value ref) Environment.t =
   | Ast.Super_expr (name, pos) ->
       let%bind superclass =
         match%bind find ~name:"super" with
-        | None ->
-            raise
-              (EvalError
-                 (pos, "Can't use 'super' in a class with no superclass."))
+        | None -> error ~pos "Can't use 'super' in a class with no superclass."
         | Some (Class c) -> return c
         | _ -> assert false
       in
@@ -79,8 +78,7 @@ and eval_expr expr : (value, value ref) Environment.t =
           let%bind () = define ~name ~value ~pos in
           let%bind () = set_env curr_env in
           return value
-      | _, _, Some (Member _) ->
-          raise (EvalError (pos, "Only objects have properties."))
+      | _, _, Some (Member _) -> error ~pos "Only objects have properties."
       (* this case should be ruled out by semant *)
       | _ -> assert false)
   | Ast.Or_expr (e1, e2, _) ->
@@ -102,53 +100,50 @@ and eval_expr expr : (value, value ref) Environment.t =
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Bool Float.(n1 < n2)
-      | _ -> raise (EvalError (pos, "Operands to '<' must both be numbers.")))
+      | _ -> error ~pos "Operands to '<' must both be numbers.")
   | Ast.Leq_expr (e1, e2, pos) -> (
       let%bind v1 = eval_expr e1 in
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Bool Float.(n1 <= n2)
-      | _ -> raise (EvalError (pos, "Operands to '<=' must both be numbers.")))
+      | _ -> error ~pos "Operands to '<=' must both be numbers.")
   | Ast.Gt_expr (e1, e2, pos) -> (
       let%bind v1 = eval_expr e1 in
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Bool Float.(n1 > n2)
-      | _ -> raise (EvalError (pos, "Operands to '>' must both be numbers.")))
+      | _ -> error ~pos "Operands to '>' must both be numbers.")
   | Ast.Geq_expr (e1, e2, pos) -> (
       let%bind v1 = eval_expr e1 in
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Bool Float.(n1 >= n2)
-      | _ -> raise (EvalError (pos, "Operands to '>=' must both be numbers.")))
+      | _ -> error ~pos "Operands to '>=' must both be numbers.")
   | Ast.Add_expr (e1, e2, pos) -> (
       let%bind v1 = eval_expr e1 in
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Number (n1 +. n2)
       | String s1, String s2 -> return @@ String (s1 ^ s2)
-      | _ ->
-          raise
-            (EvalError (pos, "Operands to '+' must both be numbers or strings."))
-      )
+      | _ -> error ~pos "Operands to '+' must both be numbers or strings.")
   | Ast.Sub_expr (e1, e2, pos) -> (
       let%bind v1 = eval_expr e1 in
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Number (n1 -. n2)
-      | _ -> raise (EvalError (pos, "Operands to '-' must both be numbers.")))
+      | _ -> error ~pos "Operands to '-' must both be numbers.")
   | Ast.Mult_expr (e1, e2, pos) -> (
       let%bind v1 = eval_expr e1 in
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Number (n1 *. n2)
-      | _ -> raise (EvalError (pos, "Operands to '*' must both be numbers.")))
+      | _ -> error ~pos "Operands to '*' must both be numbers.")
   | Ast.Div_expr (e1, e2, pos) -> (
       let%bind v1 = eval_expr e1 in
       let%bind v2 = eval_expr e2 in
       match (v1, v2) with
       | Number n1, Number n2 -> return @@ Number (n1 /. n2)
-      | _ -> raise (EvalError (pos, "Operands to '/' must both be numbers.")))
+      | _ -> error ~pos "Operands to '/' must both be numbers.")
   | Ast.Neg_expr (e, _) ->
       let%bind v = eval_expr e in
       return @@ Bool (not (is_truthy v))
@@ -156,7 +151,7 @@ and eval_expr expr : (value, value ref) Environment.t =
       let%bind v = eval_expr e in
       match v with
       | Number n -> return @@ Number Float.(-n)
-      | _ -> raise (EvalError (pos, "Operand to '-' must be a number.")))
+      | _ -> error ~pos "Operand to '-' must be a number.")
   | Ast.Call_expr ({ primary; calls }, pos) ->
       let%bind callee = eval_atom_expr primary in
       foldM calls ~init:callee ~f:(fun callee -> function
@@ -173,7 +168,7 @@ and eval_expr expr : (value, value ref) Environment.t =
                 in
                 let%bind () = set_env curr_env in
                 return prop
-            | _ -> raise (EvalError (pos, "Only objects have properties.")))
+            | _ -> error ~pos "Only objects have properties.")
         | Call args -> call ~callee ~args ~pos)
 
 and call ~callee ~args ~pos : (value, value ref) Environment.t =
@@ -182,28 +177,22 @@ and call ~callee ~args ~pos : (value, value ref) Environment.t =
   match callee with
   | Class ({ arity; _ } as base) ->
       if num_args <> arity then
-        raise
-          (EvalError
-             (pos, sprintf "Expected %d arguments but got %d." arity num_args))
+        error ~pos @@ sprintf "Expected %d arguments but got %d." arity num_args
       else
         let%bind env = class_env in
         let instance = ref { base; env } in
         let%bind _ =
-          match find_method instance ~name:"init" with
-          | Some { call; _ } -> call arg_vals
-          | None -> return Nil
+          f_or_nil ~f:(fun { call; _ } -> call arg_vals)
+          @@ find_method instance ~name:"init"
         in
         return (Object instance)
   | Function { arity; call; _ } ->
       if num_args <> arity then
-        raise
-          (EvalError
-             (pos, sprintf "Expected %d arguments but got %d." arity num_args))
+        error ~pos @@ sprintf "Expected %d arguments but got %d." arity num_args
       else call arg_vals
-  | _ -> raise (EvalError (pos, "Can only call functions and classes."))
+  | _ -> error ~pos "Can only call functions and classes."
 
-and execute_statement ~can_return (t : Ast.statement) :
-    (return, value ref) Environment.t =
+and execute_statement ~can_return t : (return, value ref) Environment.t =
   match t with
   | Ast.Expr_stmt e ->
       let%bind _ = eval_expr e in
@@ -231,11 +220,9 @@ and execute_statement ~can_return (t : Ast.statement) :
       return Continue
   | Ast.Return_stmt (expr, pos) -> (
       match can_return with
-      | false -> raise (EvalError (pos, "Can't return from top-level code."))
+      | false -> error ~pos "Can't return from top-level code."
       | true ->
-          let%bind v =
-            match expr with None -> return Nil | Some expr -> eval_expr expr
-          in
+          let%bind v = f_or_nil ~f:eval_expr expr in
           return (Return v))
   | Ast.While_stmt { cond; body } ->
       execute_loop ~can_return ~cond:(Some cond) ~step:None ~body
@@ -251,8 +238,7 @@ and execute_statement ~can_return (t : Ast.statement) :
       let%bind () = set_env old_env in
       return res
 
-and execute_declaration ~can_return (t : Ast.declaration) :
-    (return, value ref) Environment.t =
+and execute_declaration ~can_return t : (return, value ref) Environment.t =
   match t with
   | Ast.Class_decl (c, pos) ->
       let%bind () = execute_class_decl c ~pos in
@@ -273,7 +259,7 @@ and execute_class_decl { name; parent; body } ~pos :
     | Some parent -> (
         match%bind find_exn ~name:parent ~kind:"class" ~pos with
         | Class c -> return (Some c)
-        | _ -> raise (EvalError (pos, "Superclass must be a class.")))
+        | _ -> error ~pos "Superclass must be a class.")
   in
   let c = Nil in
   let%bind () = define ~name ~value:c ~pos in
@@ -347,9 +333,7 @@ and create_function ?(is_init = false) ~env { name; params; body; pos } =
 
 and execute_var_decl ?(pos = Lexing.dummy_pos) { name; init } :
     (unit, value ref) Environment.t =
-  let%bind value =
-    match init with None -> return Nil | Some e -> eval_expr e
-  in
+  let%bind value = f_or_nil ~f:eval_expr init in
   define ~name ~value ~pos
 
 and execute_for_init init : (unit, value ref) Environment.t =
@@ -363,13 +347,10 @@ and execute_loop ~can_return ?(cond = None) ?(step = None) ~body :
   let%bind cond_v =
     match cond with None -> return @@ Bool true | Some expr -> eval_expr expr
   in
-  match is_truthy cond_v with
-  | false -> return Continue
-  | true -> (
-      match%bind execute_statement ~can_return body with
-      | Continue ->
-          let%bind _ =
-            match step with None -> return Nil | Some expr -> eval_expr expr
-          in
-          execute_loop ~can_return ~cond ~step ~body
-      | x -> return x)
+  if not @@ is_truthy cond_v then return Continue
+  else
+    match%bind execute_statement ~can_return body with
+    | Continue ->
+        let%bind _ = f_or_nil ~f:eval_expr step in
+        execute_loop ~can_return ~cond ~step ~body
+    | x -> return x

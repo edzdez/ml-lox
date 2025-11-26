@@ -27,6 +27,7 @@ let print_error pos msg =
     fprintf outx "%s:%d:%d" pos.pos_fname pos.pos_lnum
       (pos.pos_cnum - pos.pos_bol + 1)
   in
+  let msg = String.chop_suffix_if_exists msg ~suffix:"\n" in
   fprintf stderr "%a: %s\n%!" print_position pos msg
 
 let parse_with_error lexbuf =

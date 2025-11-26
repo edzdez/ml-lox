@@ -2,7 +2,8 @@ open! Core
 
 exception SemantError of Ast.position * string
 
-(* We really, only check that assignment is to valid lvalues... *)
+let error ~pos msg = raise (SemantError (pos, msg))
+
 let rec check_declaration ?(is_init = false) ?(in_class = false)
     ?(has_parent = false) ?(curr_scope = None) (t : Ast.declaration) =
   match t with
@@ -16,7 +17,7 @@ and check_class ~pos ({ name; parent; body } : Ast.class_decl) =
   | None -> ()
   | Some parent ->
       if String.(name = parent) then
-        raise (SemantError (pos, "A class can't inherit from itself.")));
+        error ~pos "A class can't inherit from itself.");
   List.iter body ~f:(fun ({ name; _ } as f) ->
       check_function
         ~is_init:String.(name = "init")
@@ -25,16 +26,14 @@ and check_class ~pos ({ name; parent; body } : Ast.class_decl) =
 and check_function ~is_init ?(in_class = false) ?(has_parent = false)
     ({ body; params; pos; _ } : Ast.func) =
   if List.length params >= 255 then
-    raise (SemantError (pos, "Can't have more than 255 parameters."))
+    error ~pos "Can't have more than 255 parameters."
   else
     let scope =
       List.fold_right params
         ~init:(Hash_set.create (module String))
         ~f:(fun name acc ->
           if Hash_set.mem acc name then
-            raise
-              (SemantError
-                 (pos, sprintf "Redefinition of '%s' in this scope." name))
+            error ~pos @@ sprintf "Redefinition of '%s' in this scope." name
           else Hash_set.add acc name;
           acc)
     in
@@ -47,8 +46,7 @@ and check_var ~curr_scope ~pos ({ name; init } : Ast.var_decl) =
   | None -> ()
   | Some scope ->
       if Hash_set.mem scope name then
-        raise
-          (SemantError (pos, sprintf "Redefinition of '%s' in this scope." name))
+        error ~pos @@ sprintf "Redefinition of '%s' in this scope." name
       else Hash_set.add scope name);
   match init with None -> () | Some expr -> check_expr expr
 
@@ -74,9 +72,7 @@ and check_statement ~is_init ?(in_class = false) ?(has_parent = false) s =
       | None -> ()
       | Some e ->
           if is_init then
-            raise
-              (SemantError
-                 (pos, "Can't use a nonempty return from an initializer"))
+            error ~pos "Can't use a nonempty return from an initializer"
           else check_expr e)
   | Ast.While_stmt { cond; body } ->
       check_expr cond;
@@ -89,16 +85,15 @@ and check_expr ?(in_class = false) ?(has_parent = false) e =
   match e with
   | Ast.Assign_expr ({ lhs; rhs }, pos) -> (
       check_expr rhs;
-      (* ensure that lhs is an lvalue *)
       match lhs with
       | { primary; calls = [] } -> (
           match primary with
           | Ast.Var_expr _ -> ()
-          | _ -> raise (SemantError (pos, "Expected lvalue before '='.")))
+          | _ -> error ~pos "Expected lvalue before '='.")
       | { calls; _ } -> (
           match List.last_exn calls with
           | Member _ -> ()
-          | _ -> raise (SemantError (pos, "Expected lvalue before '='."))))
+          | _ -> error ~pos "Expected lvalue before '='."))
   | Ast.Or_expr (e1, e2, _) ->
       check_expr e1;
       check_expr e2
@@ -137,28 +132,25 @@ and check_expr ?(in_class = false) ?(has_parent = false) e =
       check_expr e2
   | Ast.Neg_expr (e, _) -> check_expr e
   | Ast.Minus_expr (e, _) -> check_expr e
-  | Ast.Call_expr ({ primary; calls }, loc) ->
+  | Ast.Call_expr ({ primary; calls }, pos) ->
       check_atom_expr ~in_class ~has_parent primary;
-      List.iter calls ~f:(check_call_t ~loc)
+      List.iter calls ~f:(check_call_t ~pos)
 
 and check_atom_expr ?(in_class = false) ?(has_parent = false) e =
   match e with
   | Ast.Expr_expr (e, _) -> check_expr e
   | This_expr pos ->
-      if not in_class then
-        raise (SemantError (pos, "Can't use 'this' outside of a class."))
+      if not in_class then error ~pos "Can't use 'this' outside of a class."
   | Super_expr (_, pos) ->
-      if not in_class then
-        raise (SemantError (pos, "Can't use 'super' outside of a class."))
+      if not in_class then error ~pos "Can't use 'super' outside of a class."
       else if not has_parent then
-        raise
-          (SemantError (pos, "Can't use 'super' in a class with no superclass."))
+        error ~pos "Can't use 'super' in a class with no superclass."
   | _ -> ()
 
-and check_call_t ~loc t =
+and check_call_t ~pos t =
   match t with
   | Ast.Call args ->
       if List.length args >= 255 then
-        raise (SemantError (loc, "Can't have more than 255 arguments."))
+        error ~pos "Can't have more than 255 arguments."
       else List.iter args ~f:check_expr
   | Ast.Member _ -> ()
