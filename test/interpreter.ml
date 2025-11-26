@@ -507,13 +507,6 @@ let%expect_test "support this" =
   interpret lexbuf;
   [%expect {| The German chocolate cake is delicious! |}]
 
-let%expect_test "runtime error when referring to this outside of a method" =
-  let lexbuf = Lexing.from_string {|
-    this;
-    |} in
-  interpret lexbuf;
-  [%expect {| :2:5: Can't use 'this' outside of a class. |}]
-
 let%expect_test "constructors" =
   let lexbuf =
     Lexing.from_string

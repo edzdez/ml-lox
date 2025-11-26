@@ -29,7 +29,7 @@ My implementation differs in some ways from Rob Nystrom's:
   on the left-hand side, instead of `(<call> DOT)? <identifier>`.
   Then, a second pass through the tree verifies that assignment targets are lvalues (i.e. they end with an `<identifier>`).
 - Instead of a resolver, I create a new environment whenever a new variable is declared.
-  Because it's rather annoying to manually plum the environments through the code, it's implemented as essentially the
+  Because it's rather annoying to manually plumb the environments through the code, it's implemented as essentially the
   [State monad](https://wiki.haskell.org/State_Monad) from Haskell.
 - I deviate slightly from Lox's original semantics for variable declaration:
   ```
@@ -42,4 +42,3 @@ My implementation differs in some ways from Rob Nystrom's:
   The original semantics reject this fragment of code, but I'm of the opinion that it's perfectly reasonable.
   Hence, my implementation allows it.
 - Since I don't use a resolver, I don't (currently) check for duplicate declarations statically; they are instead handled dynamically.
-  Similarly, invalid uses of `this` are also checked dynamically.

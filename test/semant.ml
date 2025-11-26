@@ -84,3 +84,8 @@ let%expect_test "allow empty return from a constructor" =
   in
   check_semant lexbuf;
   [%expect {| |}]
+
+let%expect_test "reject invalid uses of this" =
+  let lexbuf = Lexing.from_string {| this; |} in
+  check_semant lexbuf;
+  [%expect {| :1:2: Can't use 'this' outside of a class. |}]

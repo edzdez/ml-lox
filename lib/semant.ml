@@ -3,28 +3,30 @@ open! Core
 exception SemantError of Ast.position * string
 
 (* We really, only check that assignment is to valid lvalues... *)
-let rec check_declaration ?(is_init = false) (t : Ast.declaration) =
+let rec check_declaration ?(is_init = false) ?(in_class = false)
+    (t : Ast.declaration) =
   match t with
   | Ast.Class_decl (t, _) -> check_class t
-  | Ast.Func_decl t -> check_function ~is_init t
+  | Ast.Func_decl t -> check_function ~is_init ~in_class t
   | Ast.Var_decl (t, _) -> check_var t
-  | Ast.Stmt_decl t -> check_statement ~is_init t
+  | Ast.Stmt_decl t -> check_statement ~is_init ~in_class t
 
 and check_class ({ body; _ } : Ast.class_decl) =
   List.iter body ~f:(fun ({ name; _ } as f) ->
-      check_function ~is_init:String.(name = "init") f)
+      check_function ~is_init:String.(name = "init") ~in_class:true f)
 
-and check_function ~is_init ({ body; params; pos; _ } : Ast.func) =
+and check_function ~is_init ?(in_class = false)
+    ({ body; params; pos; _ } : Ast.func) =
   if List.length params >= 255 then
     raise (SemantError (pos, "Can't have more than 255 parameters."))
-  else List.iter body ~f:(check_declaration ~is_init)
+  else List.iter body ~f:(check_declaration ~is_init ~in_class)
 
 and check_var ({ init; _ } : Ast.var_decl) =
   match init with None -> () | Some expr -> check_expr expr
 
-and check_statement ~is_init s =
+and check_statement ~is_init ?(in_class = false) s =
   match s with
-  | Ast.Expr_stmt e -> check_expr e
+  | Ast.Expr_stmt e -> check_expr ~in_class e
   | Ast.For_stmt { init; cond; step; body } ->
       (match init with
       | None -> ()
@@ -53,7 +55,7 @@ and check_statement ~is_init s =
       check_statement ~is_init body
   | Ast.Block_stmt decls -> List.iter decls ~f:check_declaration
 
-and check_expr e =
+and check_expr ?(in_class = false) e =
   match e with
   | Ast.Assign_expr ({ lhs; rhs }, pos) -> (
       check_expr rhs;
@@ -106,11 +108,16 @@ and check_expr e =
   | Ast.Neg_expr (e, _) -> check_expr e
   | Ast.Minus_expr (e, _) -> check_expr e
   | Ast.Call_expr ({ primary; calls }, loc) ->
-      check_atom_expr primary;
+      check_atom_expr ~in_class primary;
       List.iter calls ~f:(check_call_t ~loc)
 
-and check_atom_expr e =
-  match e with Ast.Expr_expr (e, _) -> check_expr e | _ -> ()
+and check_atom_expr ?(in_class = false) e =
+  match e with
+  | Ast.Expr_expr (e, _) -> check_expr e
+  | This_expr pos ->
+      if not in_class then
+        raise (SemantError (pos, "Can't use 'this' outside of a class."))
+  | _ -> ()
 
 and check_call_t ~loc t =
   match t with
