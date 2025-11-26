@@ -13,7 +13,7 @@ To build the interpreter, ensure that you have [dune](https://dune.build/) >= 3.
 Then, run:
 
 ```shell
-$ dune build --release
+$ dune build
 ```
 
 The interpreter executable can then be found at `./_build/default/bin/lox.exe`.

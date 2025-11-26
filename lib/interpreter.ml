@@ -253,12 +253,12 @@ and execute_declaration ~can_return t : (return, value ref) Environment.t =
 
 and execute_class_decl { name; parent; body } ~pos :
     (unit, value ref) Environment.t =
-  let%bind parent =
+  let%bind parent, arity =
     match parent with
-    | None -> return None
+    | None -> return (None, ref 0)
     | Some parent -> (
         match%bind find_exn ~name:parent ~kind:"class" ~pos with
-        | Class c -> return (Some c)
+        | Class c -> return (Some c, ref c.arity)
         | _ -> error ~pos "Superclass must be a class.")
   in
   let c = Nil in
@@ -270,7 +270,6 @@ and execute_class_decl { name; parent; body } ~pos :
     | None -> env
     | Some parent -> bind env ~name:"super" ~value:(Class parent)
   in
-  let arity = ref 0 in
   let methods =
     List.map body ~f:(fun ({ name; params; _ } as f) ->
         let is_init = String.(name = "init") in
