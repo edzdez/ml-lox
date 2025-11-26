@@ -4,7 +4,7 @@ An interpreter for the [Lox language](https://craftinginterpreters.com/the-lox-l
 
 ## Build
 
-To build the interpreter, ensure that you have [dune](https://dune.build/) >= 3.20 and the following dependencies:
+To build the interpreter, ensure that you have [dune](https://dune.build/) >= 3.20 and the following dependencies from opam:
 
 - [Core](https://ocaml.org/p/core/v0.17.1) 0.17.1,
 - [Core_unix](https://ocaml.org/p/core_unix/v0.17.1) 0.17.1, and
@@ -22,12 +22,12 @@ In `./test_programs/`, there are a bunch of test programs from the original
 
 ## Notes
 
-My implementation differs in some ways from Rob Nystrom's:
+My implementation slightly differs from the original:
 
-- I use [Menhir](https://gallium.inria.fr/~fpottier/menhir/) to generate the parser from the grammar, rather than hand-rolling it myself.
+- I used ocamllex and [Menhir](https://gallium.inria.fr/~fpottier/menhir/) to generate the parser from the grammar, rather than hand-rolling it myself.
   I had to modify the grammar a bit to resolve shift-reduce conflicts: in particular, I adjusted the assignment rule to take just a `<call>`
   on the left-hand side, instead of `(<call> DOT)? <identifier>`.
-  Then, a second pass through the tree verifies that assignment targets are lvalues (i.e. they end with an `<identifier>`).
+  Then, the semantic analysis pass verifies that the assignment targets are lvalues (i.e. they end with an `<identifier>`).
 - Instead of a resolver, I create a new environment whenever a new variable is declared.
   Because it's rather annoying to manually plumb the environments through the code, it's implemented as essentially the
   [State monad](https://wiki.haskell.org/State_Monad) from Haskell.
