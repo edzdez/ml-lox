@@ -8,7 +8,7 @@ let rec check_declaration ?(is_init = false) ?(in_class = false)
     ?(has_parent = false) ?(curr_scope = None) (t : Ast.declaration) =
   match t with
   | Ast.Class_decl (t, pos) -> check_class ~pos t
-  | Ast.Func_decl t -> check_function ~is_init ~in_class ~has_parent t
+  | Ast.Func_decl t -> check_function ~is_init:false ~in_class ~has_parent t
   | Ast.Var_decl (t, pos) -> check_var ~curr_scope ~in_class ~has_parent ~pos t
   | Ast.Stmt_decl t -> check_statement ~is_init ~in_class ~has_parent t
 
