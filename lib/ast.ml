@@ -16,7 +16,7 @@ and call_expr = { primary : atom_expr; calls : call_t list }
 and atom_expr =
   | Bool_expr of bool
   | Nil_expr
-  | This_expr
+  | This_expr of position
   | Number_expr of float
   | String_expr of string
   | Var_expr of string * position

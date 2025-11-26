@@ -473,9 +473,9 @@ let%expect_test "supports setting properties" =
   [%expect {| Jane |}]
 
 let%expect_test "supports simple methods" =
-  (let lexbuf =
-     Lexing.from_string
-       {|
+  let lexbuf =
+    Lexing.from_string
+      {|
        class Bacon {
          eat() {
            print "Crunch crunch crunch!";
@@ -484,6 +484,32 @@ let%expect_test "supports simple methods" =
 
        Bacon().eat();
        |}
-   in
-   interpret lexbuf);
+  in
+  interpret lexbuf;
   [%expect {| Crunch crunch crunch! |}]
+
+let%expect_test "support this" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      class Cake {
+        taste() {
+          var adjective = "delicious";
+          print "The " + this.flavor + " cake is " + adjective + "!";
+        }
+      }
+
+      var cake = Cake();
+      cake.flavor = "German chocolate";
+      cake.taste();
+      |}
+  in
+  interpret lexbuf;
+  [%expect {| The German chocolate cake is delicious! |}]
+
+let%expect_test "runtime error when referring to this outside of a method" =
+  let lexbuf = Lexing.from_string {|
+      this;
+      |} in
+  interpret lexbuf;
+  [%expect {| :2:7: Can't refer to 'this' outside of a method. |}]

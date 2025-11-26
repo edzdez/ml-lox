@@ -313,7 +313,8 @@ primary:
   | NIL
     { Nil_expr }
   | THIS
-    { This_expr }
+    { let (pos, _) : Lexing.position * Lexing.position = $loc in
+      This_expr pos }
   | n = NUMBER
     { Number_expr n }
   | s = STRING

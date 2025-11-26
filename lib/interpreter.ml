@@ -35,7 +35,11 @@ let rec eval_atom_expr (expr : Ast.atom_expr) : (value, value ref) Environment.t
   match expr with
   | Ast.Bool_expr b -> return @@ Bool b
   | Ast.Nil_expr -> return @@ Nil
-  | Ast.This_expr -> assert false
+  | Ast.This_expr pos -> (
+      match%bind find ~name:"this" with
+      | None ->
+          raise (EvalError (pos, "Can't refer to 'this' outside of a method."))
+      | Some v -> return v)
   | Ast.Number_expr n -> return @@ Number n
   | Ast.String_expr s -> return @@ String s
   | Ast.Var_expr (name, pos) -> find_exn ~name ~kind:"variable" ~pos
@@ -151,8 +155,7 @@ and eval_expr (expr : Ast.expr) : (value, value ref) Environment.t =
                 let%bind prop =
                   match%bind find ~name with
                   | Some prop -> return prop
-                  | None ->
-                      return (Function (find_method_exn !o.base ~name ~pos))
+                  | None -> return (Function (find_method_exn o ~name ~pos))
                 in
                 let%bind () = set_env curr_env in
                 return prop
@@ -251,7 +254,11 @@ and execute_class_decl { name; body; _ } ~pos : (unit, value ref) Environment.t
   let%bind ref = find_ref_exn ~name ~pos:Lexing.dummy_pos in
   let%bind env = get_env in
   let methods =
-    List.map body ~f:(fun ({ name; _ } as f) -> (name, create_function f ~env))
+    List.map body ~f:(fun ({ name; _ } as f) ->
+        ( name,
+          fun o ->
+            let new_env = bind env ~name:"this" ~value:(Object o) in
+            create_function f ~env:new_env ))
   in
   ref :=
     Class

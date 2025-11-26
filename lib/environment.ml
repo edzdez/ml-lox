@@ -37,7 +37,7 @@ type lox_object = { base : lox_class; env : value ref env }
 and lox_class = {
   name : string;
   arity : int;
-  methods : (string, lox_function) Hashtbl.t;
+  methods : (string, lox_object ref -> lox_function) Hashtbl.t;
 }
 
 and lox_function = {
@@ -55,9 +55,15 @@ and value =
   | Function of lox_function
   | Nil
 
-let find_method_exn { methods; _ } ~name ~pos =
-  match Hashtbl.find methods name with
-  | Some m -> m
+let bind { locals; globals } ~name ~value =
+  {
+    locals = Map.of_alist_exn (module String) [ (name, ref value) ] :: locals;
+    globals;
+  }
+
+let find_method_exn (o : lox_object ref) ~name ~pos =
+  match Hashtbl.find !o.base.methods name with
+  | Some m -> m o
   | None -> raise (EnvError (pos, sprintf "Undefined property '%s'." name))
 
 let get_env : (value ref env, value ref) t = fun env -> (env, env)
