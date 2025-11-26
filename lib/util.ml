@@ -14,26 +14,28 @@ let initial_globals () =
                  (fun _ ->
                    Environment.return
                    @@ Environment.Number
-                        (Time_float.now () |> Time_float.to_span_since_epoch
-                       |> Time_float.Span.to_sec));
+                        (Time_float.Span.to_sec
+                       @@ Time_float.to_span_since_epoch @@ Time_float.now ()));
              } );
     ]
 
 let initial_env () : Environment.value ref Environment.env =
   { locals = []; globals = initial_globals () }
 
-let print_position outx (pos : Lexing.position) =
-  fprintf outx "%s:%d:%d" pos.pos_fname pos.pos_lnum
-    (pos.pos_cnum - pos.pos_bol + 1)
+let print_error pos msg =
+  let print_position outx (pos : Lexing.position) =
+    fprintf outx "%s:%d:%d" pos.pos_fname pos.pos_lnum
+      (pos.pos_cnum - pos.pos_bol + 1)
+  in
+  fprintf stderr "%a: %s\n%!" print_position pos msg
 
 let parse_with_error lexbuf =
   try Parser.program Lexer.read lexbuf with
   | Lexer.SyntaxError msg ->
-      fprintf stderr "%a: %s\n%!" print_position lexbuf.lex_curr_p msg;
+      print_error lexbuf.lex_curr_p msg;
       []
   | Parser.Error state ->
-      fprintf stderr "%a: %s%!" print_position lexbuf.lex_curr_p
-        (Parser_messages.message state);
+      print_error lexbuf.lex_curr_p (Parser_messages.message state);
       []
 
 let do_semant decl =
@@ -41,7 +43,7 @@ let do_semant decl =
     Semant.check_declaration decl;
     true
   with Semant.SemantError (pos, msg) ->
-    fprintf stderr "%a: %s\n%!" print_position pos msg;
+    print_error pos msg;
     false
 
 let do_interpret ~env ast =
@@ -51,10 +53,10 @@ let do_interpret ~env ast =
         Interpreter.execute_declaration ~can_return:false decl)
   with
   | Interpreter.EvalError (pos, msg) ->
-      fprintf stderr "%a: %s\n%!" print_position pos msg;
+      print_error pos msg;
       env
   | Environment.EnvError (pos, msg) ->
-      fprintf stderr "%a: %s\n%!" print_position pos msg;
+      print_error pos msg;
       env
 
 let string_of_token (t : Parser.token) =
