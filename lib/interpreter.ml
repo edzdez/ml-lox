@@ -44,9 +44,27 @@ let rec eval_atom_expr (expr : Ast.atom_expr) : (value, value ref) Environment.t
 
 and eval_expr (expr : Ast.expr) : (value, value ref) Environment.t =
   match expr with
-  | Ast.Assign_expr ({ lhs; rhs }, _) ->
-      let%bind rhs = eval_expr rhs in
-      assign_at ~lvalue:lhs ~value:rhs
+  | Ast.Assign_expr ({ lhs = { primary; calls }; rhs }, pos) -> (
+      let calls, property =
+        List.fold_right calls ~init:([], None) ~f:(fun x -> function
+          | _, None -> ([], Some x)
+          | xs, last -> (x :: xs, last))
+      in
+      let%bind new_primary = eval_expr (Call_expr ({ primary; calls }, pos)) in
+      let%bind value = eval_expr rhs in
+      match (primary, new_primary, property) with
+      | Var_expr (name, _), _, None -> assign ~name ~value ~kind:"variable" ~pos
+      | _, Object o, Some (Member name) ->
+          let obj_env = !o.env in
+          let%bind curr_env = get_env in
+          let%bind () = set_env obj_env in
+          let%bind () = define ~name ~value ~pos in
+          let%bind () = set_env curr_env in
+          return value
+      | _, _, Some (Member _) ->
+          raise (EvalError (pos, "Only objects have properties."))
+      (* this case should be ruled out by semant *)
+      | _ -> assert false)
   | Ast.Or_expr (e1, e2, _) ->
       let%bind v1 = eval_expr e1 in
       if is_truthy v1 then return v1 else eval_expr e2

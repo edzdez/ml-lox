@@ -458,3 +458,16 @@ let%expect_test "runtime error when accessing undefined field" =
   in
   interpret lexbuf;
   [%expect {| :4:11: Undefined property 'bar'. |}]
+
+let%expect_test "supports setting properties" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Person {}
+    var p = Person();
+    p.name = "Jane";
+    print p.name;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| Jane |}]

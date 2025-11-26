@@ -53,6 +53,25 @@ and value =
 let get_env : (value ref env, value ref) t = fun env -> (env, env)
 let set_env env : (unit, value ref) t = fun _ -> ((), env)
 
+let foldM (xs : 'a list) ~(init : 'b) ~(f : 'b -> 'a -> ('b, value ref) t) :
+    ('b, value ref) t =
+  let open Environment_monad.Let_syntax in
+  List.fold_left xs ~init:(return init) ~f:(fun acc x ->
+      let%bind acc' = acc in
+      f acc' x)
+
+let mapM (xs : 'a list) ~(f : 'a -> ('b, value ref) t) : ('b list, value ref) t
+    =
+  let open Environment_monad.Let_syntax in
+  List.fold_left xs ~init:(return []) ~f:(fun acc x ->
+      let%bind x' = f x in
+      let%bind acc' = acc in
+      return @@ (x' :: acc'))
+  >>| List.rev
+
+let run (m : ('a, value ref) t) ~(env : value ref env) : value ref env =
+  snd @@ m env
+
 let open_scope : (unit, value ref) t =
  fun { locals; globals } ->
   ((), { locals = Map.empty (module String) :: locals; globals })
@@ -116,42 +135,12 @@ let assign ~name ~value ?(kind = "variable") ~pos : (value, value ref) t =
   in
   aux locals
 
-let assign_at ~lvalue:({ primary; calls } : Ast.call_expr) ~value :
-    (value, value ref) t =
-  match calls with
-  | [] -> (
-      match primary with
-      | Var_expr (name, pos) -> assign ~name ~value ~kind:"variable" ~pos
-      (* semant should rule this case out *)
-      | _ -> assert false)
-  | _ -> assert false
-
 let class_env : (value ref env, value ref) t =
   let open Environment_monad.Let_syntax in
   let%bind old_env = get_env in
   let%bind () =
     set_env { locals = []; globals = Hashtbl.create (module String) }
   in
-  let%bind () = open_scope in
   let%bind class_env = get_env in
   let%bind () = set_env old_env in
   return class_env
-
-let foldM (xs : 'a list) ~(init : 'b) ~(f : 'b -> 'a -> ('b, value ref) t) :
-    ('b, value ref) t =
-  let open Environment_monad.Let_syntax in
-  List.fold_left xs ~init:(return init) ~f:(fun acc x ->
-      let%bind acc' = acc in
-      f acc' x)
-
-let mapM (xs : 'a list) ~(f : 'a -> ('b, value ref) t) : ('b list, value ref) t
-    =
-  let open Environment_monad.Let_syntax in
-  List.fold_left xs ~init:(return []) ~f:(fun acc x ->
-      let%bind x' = f x in
-      let%bind acc' = acc in
-      return @@ (x' :: acc'))
-  >>| List.rev
-
-let run (m : ('a, value ref) t) ~(env : value ref env) : value ref env =
-  snd @@ m env
