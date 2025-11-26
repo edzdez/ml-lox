@@ -512,4 +512,4 @@ let%expect_test "runtime error when referring to this outside of a method" =
       this;
       |} in
   interpret lexbuf;
-  [%expect {| :2:7: Can't refer to 'this' outside of a method. |}]
+  [%expect {| :2:7: Can't use 'this' outside of a class. |}]

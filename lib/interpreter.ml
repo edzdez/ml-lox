@@ -37,8 +37,7 @@ let rec eval_atom_expr (expr : Ast.atom_expr) : (value, value ref) Environment.t
   | Ast.Nil_expr -> return @@ Nil
   | Ast.This_expr pos -> (
       match%bind find ~name:"this" with
-      | None ->
-          raise (EvalError (pos, "Can't refer to 'this' outside of a method."))
+      | None -> raise (EvalError (pos, "Can't use 'this' outside of a class."))
       | Some v -> return v)
   | Ast.Number_expr n -> return @@ Number n
   | Ast.String_expr s -> return @@ String s
