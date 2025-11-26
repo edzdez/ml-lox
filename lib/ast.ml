@@ -2,14 +2,9 @@ open! Core
 
 type position = Lexing.position
 
-let sexp_of_position _ = Sexp.Atom "pos"
+let sexp_of_position _ = Sexp.unit
 
-type assign_expr = {
-  (* this should really be an LValue. *)
-  lhs : call_expr;
-  rhs : expr;
-}
-
+type assign_expr = { lhs : call_expr; rhs : expr }
 and call_t = Call of expr list | Member of string
 and call_expr = { primary : atom_expr; calls : call_t list }
 
