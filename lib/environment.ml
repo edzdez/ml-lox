@@ -61,9 +61,14 @@ let bind { locals; globals } ~name ~value =
     globals;
   }
 
+let find_method (o : lox_object ref) ~name =
+  let open Option.Let_syntax in
+  let%bind m = Hashtbl.find !o.base.methods name in
+  return @@ m o
+
 let find_method_exn (o : lox_object ref) ~name ~pos =
-  match Hashtbl.find !o.base.methods name with
-  | Some m -> m o
+  match find_method o ~name with
+  | Some m -> m
   | None -> raise (EnvError (pos, sprintf "Undefined property '%s'." name))
 
 let get_env : (value ref env, value ref) t = fun env -> (env, env)

@@ -174,6 +174,11 @@ and call ~(callee : value) ~(args : Ast.expr list) ~pos :
       else
         let%bind env = class_env in
         let instance = ref { base; env } in
+        let%bind _ =
+          match find_method instance ~name:"init" with
+          | Some { call; _ } -> call arg_vals
+          | None -> return Nil
+        in
         return (Object instance)
   | Function { arity; call; _ } ->
       if num_args <> arity then
@@ -250,20 +255,23 @@ and execute_class_decl { name; body; _ } ~pos : (unit, value ref) Environment.t
     =
   let c = Nil in
   let%bind () = define ~name ~value:c ~pos in
-  let%bind ref = find_ref_exn ~name ~pos:Lexing.dummy_pos in
+  let%bind c_ref = find_ref_exn ~name ~pos:Lexing.dummy_pos in
   let%bind env = get_env in
+  let arity = ref 0 in
   let methods =
-    List.map body ~f:(fun ({ name; _ } as f) ->
+    List.map body ~f:(fun ({ name; params; _ } as f) ->
+        let is_init = String.(name = "init") in
+        if is_init then arity := List.length params;
         ( name,
           fun o ->
             let new_env = bind env ~name:"this" ~value:(Object o) in
-            create_function f ~env:new_env ))
+            create_function f ~is_init ~env:new_env ))
   in
-  ref :=
+  c_ref :=
     Class
       {
         name;
-        arity = 0;
+        arity = !arity;
         methods = Hashtbl.of_alist_exn (module String) methods;
       };
   return ()
@@ -277,7 +285,7 @@ and execute_func_decl ({ name; pos; _ } as func) :
   ref := Function (create_function func ~env:closure_env);
   return ()
 
-and create_function { name; params; body; pos } ~env =
+and create_function ?(is_init = false) ~env { name; params; body; pos } =
   {
     arity = List.length params;
     string_repr = sprintf "<fn %s>" name;
@@ -296,8 +304,19 @@ and create_function { name; params; body; pos } ~env =
             | Continue -> fun decl -> execute_declaration ~can_return:true decl)
         in
         let%bind () = close_scope in
-        let%bind _ = set_env old_env in
-        match res with Continue -> return Nil | Return v -> return v);
+        match (res, is_init) with
+        | Continue, false ->
+            let%bind () = set_env old_env in
+            return Nil
+        | Continue, true ->
+            let%bind this =
+              find_exn ~name:"this" ~kind:"unreachable" ~pos:Lexing.dummy_pos
+            in
+            let%bind () = set_env old_env in
+            return this
+        | Return v, _ ->
+            let%bind () = set_env old_env in
+            return v);
   }
 
 and execute_var_decl ~pos { name; init } : (unit, value ref) Environment.t =

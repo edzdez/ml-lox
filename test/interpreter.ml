@@ -509,7 +509,41 @@ let%expect_test "support this" =
 
 let%expect_test "runtime error when referring to this outside of a method" =
   let lexbuf = Lexing.from_string {|
-      this;
-      |} in
+    this;
+    |} in
   interpret lexbuf;
-  [%expect {| :2:7: Can't use 'this' outside of a class. |}]
+  [%expect {| :2:5: Can't use 'this' outside of a class. |}]
+
+let%expect_test "constructors" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Foo {
+      init(x) {
+        this.x = x;
+      }
+    }
+
+    var f = Foo(5);
+    print f.x;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| 5 |}]
+
+let%expect_test "runtime error when constructor arity is wrong" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Foo {
+      init(x) {
+        this.x = x;
+      }
+    }
+
+    var f = Foo();
+    print f.x;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| :8:13: Expected 1 arguments but got 0. |}]

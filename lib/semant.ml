@@ -3,25 +3,26 @@ open! Core
 exception SemantError of Ast.position * string
 
 (* We really, only check that assignment is to valid lvalues... *)
-let rec check_declaration (t : Ast.declaration) =
+let rec check_declaration ?(is_init = false) (t : Ast.declaration) =
   match t with
   | Ast.Class_decl (t, _) -> check_class t
-  | Ast.Func_decl t -> check_function t
+  | Ast.Func_decl t -> check_function ~is_init t
   | Ast.Var_decl (t, _) -> check_var t
-  | Ast.Stmt_decl t -> check_statement t
+  | Ast.Stmt_decl t -> check_statement ~is_init t
 
 and check_class ({ body; _ } : Ast.class_decl) =
-  List.iter body ~f:check_function
+  List.iter body ~f:(fun ({ name; _ } as f) ->
+      check_function ~is_init:String.(name = "init") f)
 
-and check_function ({ body; params; pos; _ } : Ast.func) =
+and check_function ~is_init ({ body; params; pos; _ } : Ast.func) =
   if List.length params >= 255 then
     raise (SemantError (pos, "Can't have more than 255 parameters."))
-  else List.iter body ~f:check_declaration
+  else List.iter body ~f:(check_declaration ~is_init)
 
 and check_var ({ init; _ } : Ast.var_decl) =
   match init with None -> () | Some expr -> check_expr expr
 
-and check_statement s =
+and check_statement ~is_init s =
   match s with
   | Ast.Expr_stmt e -> check_expr e
   | Ast.For_stmt { init; cond; step; body } ->
@@ -32,17 +33,24 @@ and check_statement s =
       | Expr e -> check_expr e);
       (match cond with None -> () | Some e -> check_expr e);
       (match step with None -> () | Some e -> check_expr e);
-      check_statement body
+      check_statement ~is_init body
   | Ast.If_stmt { cond; consequent; alternative } -> (
       check_expr cond;
-      check_statement consequent;
-      match alternative with None -> () | Some s -> check_statement s)
+      check_statement ~is_init consequent;
+      match alternative with None -> () | Some s -> check_statement ~is_init s)
   | Ast.Print_stmt e -> check_expr e
-  | Ast.Return_stmt (e, _) -> (
-      match e with None -> () | Some e -> check_expr e)
+  | Ast.Return_stmt (e, pos) -> (
+      match e with
+      | None -> ()
+      | Some e ->
+          if is_init then
+            raise
+              (SemantError
+                 (pos, "Can't use a nonempty return from an initializer"))
+          else check_expr e)
   | Ast.While_stmt { cond; body } ->
       check_expr cond;
-      check_statement body
+      check_statement ~is_init body
   | Ast.Block_stmt decls -> List.iter decls ~f:check_declaration
 
 and check_expr e =

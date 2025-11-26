@@ -52,3 +52,35 @@ let%expect_test "reject function declarations with too many parameters" =
       let lexbuf = Lexing.from_channel f in
       check_semant lexbuf);
   [%expect {| :2:5: Can't have more than 255 parameters. |}]
+
+let%expect_test "reject non-empty return from a constructor" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Foo {
+      init() {
+          return 10;
+      }
+    }
+
+    var f = Foo();
+    |}
+  in
+  check_semant lexbuf;
+  [%expect {| :4:11: Can't use a nonempty return from an initializer |}]
+
+let%expect_test "allow empty return from a constructor" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Foo {
+      init() {
+          return;
+      }
+    }
+
+    var f = Foo();
+    |}
+  in
+  check_semant lexbuf;
+  [%expect {| |}]
