@@ -1,0 +1,29 @@
+./variable/collide_with_parameter.lox:2:3: Redefinition of 'a' in this scope.
+./variable/duplicate_local.lox:3:3: Redefinition of 'a' in this scope.
+./variable/duplicate_parameter.lox:1:5: Redefinition of 'arg' in this scope.
+outer
+outer
+a
+a b
+a c
+a b d
+outer
+variable
+nil
+2
+first
+second
+outer
+inner
+shadow
+global
+shadow
+local
+./variable/undefined_global.lox:1:7: Undefined variable 'notDefined'.
+./variable/undefined_local.lox:2:9: Undefined variable 'notDefined'.
+nil
+ok
+./variable/use_false_as_var.lox:2:10: Expected <identifier> after 'var'.
+value
+./variable/use_nil_as_var.lox:2:8: Expected <identifier> after 'var'.
+./variable/use_this_as_var.lox:2:9: Expected <identifier> after 'var'.

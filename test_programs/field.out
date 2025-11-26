@@ -1,0 +1,109 @@
+bar
+1
+2
+./field/call_nonfunction_field.lox:6:1: Can only call functions and classes.
+other
+1
+method
+2
+./field/get_on_bool.lox:1:1: Only objects have properties.
+./field/get_on_class.lox:2:1: Only objects have properties.
+./field/get_on_function.lox:3:1: Only objects have properties.
+./field/get_on_nil.lox:1:1: Only objects have properties.
+./field/get_on_num.lox:1:1: Only objects have properties.
+./field/get_on_string.lox:1:5: Only objects have properties.
+apple
+apricot
+avocado
+banana
+bilberry
+blackberry
+blackcurrant
+blueberry
+boysenberry
+cantaloupe
+cherimoya
+cherry
+clementine
+cloudberry
+coconut
+cranberry
+currant
+damson
+date
+dragonfruit
+durian
+elderberry
+feijoa
+fig
+gooseberry
+grape
+grapefruit
+guava
+honeydew
+huckleberry
+jabuticaba
+jackfruit
+jambul
+jujube
+juniper
+kiwifruit
+kumquat
+lemon
+lime
+longan
+loquat
+lychee
+mandarine
+mango
+marionberry
+melon
+miracle
+mulberry
+nance
+nectarine
+olive
+orange
+papaya
+passionfruit
+peach
+pear
+persimmon
+physalis
+pineapple
+plantain
+plum
+plumcot
+pomegranate
+pomelo
+quince
+raisin
+rambutan
+raspberry
+redcurrant
+salak
+salmonberry
+satsuma
+strawberry
+tamarillo
+tamarind
+tangerine
+tomato
+watermelon
+yuzu
+got method
+arg
+foo1
+1
+bar value
+baz value
+bar value
+baz value
+./field/set_evaluation_order.lox:1:1: Undefined variable 'undefined1'.
+./field/set_on_bool.lox:1:1: Only objects have properties.
+./field/set_on_class.lox:2:1: Only objects have properties.
+./field/set_on_function.lox:3:1: Only objects have properties.
+./field/set_on_nil.lox:1:1: Only objects have properties.
+./field/set_on_num.lox:1:1: Only objects have properties.
+./field/set_on_string.lox:1:5: Only objects have properties.
+./field/undefined.lox:4:1: Undefined property 'bar'.

@@ -1,0 +1,18 @@
+c
+c
+c
+before
+after
+arg
+arg
+./assignment/grouping.lox:2:1: Expected lvalue before '='.
+./assignment/infix_operator.lox:3:8: Expected lvalue before '='.
+before
+after
+arg
+arg
+./assignment/prefix_operator.lox:2:5: Expected lvalue before '='.
+var
+var
+./assignment/undefined.lox:1:1: Undefined variable 'unknown'.
+./assignment/to_this.lox:3:5: Expected lvalue before '='.

@@ -3,7 +3,7 @@ open! Core
 exception EnvError of Ast.position * string
 
 type 'b env = {
-  locals : (string, 'b, String.comparator_witness) Map.t list;
+  locals : (string, 'b, String.comparator_witness) Map.t;
   globals : (string, 'b) Hashtbl.t;
 }
 
@@ -57,10 +57,7 @@ and value =
   | Nil
 
 let bind { locals; globals } ~name ~value =
-  {
-    locals = Map.of_alist_exn (module String) [ (name, ref value) ] :: locals;
-    globals;
-  }
+  { locals = Map.update locals name ~f:(fun _ -> ref value); globals }
 
 let rec find_method_from_class ~name = function
   | None -> None
@@ -106,25 +103,11 @@ let mapM (xs : 'a list) ~(f : 'a -> ('b, value ref) t) : ('b list, value ref) t
 let run (m : ('a, value ref) t) ~(env : value ref env) : value ref env =
   snd @@ m env
 
-let open_scope : (unit, value ref) t =
- fun { locals; globals } ->
-  ((), { locals = Map.empty (module String) :: locals; globals })
-
-let close_scope : (unit, value ref) t =
- fun { locals; globals } ->
-  match locals with
-  | [] -> assert false
-  | _ :: tl -> ((), { locals = tl; globals })
-
 let find_ref ~name : (value ref option, value ref) t =
  fun ({ locals; globals } as env) ->
-  let rec aux locals =
-    match locals with
-    | [] -> (Hashtbl.find globals name, env)
-    | hd :: tl -> (
-        match Map.find hd name with None -> aux tl | v -> (v, env))
-  in
-  aux locals
+  match Map.find locals name with
+  | None -> (Hashtbl.find globals name, env)
+  | v -> (v, env)
 
 let find_ref_exn ~name ?(kind = "variable") ?(pos = Lexing.dummy_pos) :
     (value ref, value ref) t =
@@ -143,48 +126,36 @@ let find_exn ~name ?(kind = "variable") ?(pos = Lexing.dummy_pos) :
   let%bind ref = find_ref_exn ~name ~kind ~pos in
   return !ref
 
-let define ~name ~value ?(pos = Lexing.dummy_pos) : (unit, value ref) t =
+let define ?(global = false) ~name ~value : (unit, value ref) t =
  fun ({ locals; globals } as env) ->
-  match locals with
-  | [] ->
-      Hashtbl.update globals name ~f:(fun _ -> ref value);
-      ((), env)
-  | hd :: tl ->
-      let hd' =
-        Map.update hd name ~f:(function
-          | None -> ref value
-          | Some _ ->
-              raise
-                (EnvError
-                   (pos, sprintf "Redefinition of '%s' in this scope." name)))
-      in
-      ((), { locals = hd' :: tl; globals })
+  if global then (
+    Hashtbl.update globals name ~f:(fun _ -> ref value);
+    ((), env))
+  else ((), { locals = Map.update locals name ~f:(fun _ -> ref value); globals })
 
 let assign ~name ~value ?(kind = "variable") ?(pos = Lexing.dummy_pos) :
     (value, value ref) t =
  fun ({ locals; globals } as env) ->
-  let rec aux locals =
-    match locals with
-    | [] -> (
-        match Hashtbl.find globals name with
-        | None -> raise (EnvError (pos, sprintf "Undefined %s '%s'." kind name))
-        | Some v ->
-            v := value;
-            (value, env))
-    | hd :: tl -> (
-        match Map.find hd name with
-        | None -> aux tl
-        | Some v ->
-            v := value;
-            (value, env))
-  in
-  aux locals
+  match Map.find locals name with
+  | Some v ->
+      v := value;
+      (value, env)
+  | None -> (
+      match Hashtbl.find globals name with
+      | None -> raise (EnvError (pos, sprintf "Undefined %s '%s'." kind name))
+      | Some v ->
+          v := value;
+          (value, env))
 
 let class_env : (value ref env, value ref) t =
   let open Environment_monad.Let_syntax in
   let%bind old_env = get_env in
   let%bind () =
-    set_env { locals = []; globals = Hashtbl.create (module String) }
+    set_env
+      {
+        locals = Map.empty (module String);
+        globals = Hashtbl.create (module String);
+      }
   in
   let%bind class_env = get_env in
   let%bind () = set_env old_env in

@@ -20,7 +20,7 @@ let initial_globals () =
     ]
 
 let initial_env () : Environment.value ref Environment.env =
-  { locals = []; globals = initial_globals () }
+  { locals = Map.empty (module String); globals = initial_globals () }
 
 let print_error pos msg =
   let print_position outx (pos : Lexing.position) =
@@ -51,7 +51,7 @@ let do_interpret ~env ast =
   try
     Environment.run ~env
     @@ Environment.foldM ast ~init:Interpreter.Continue ~f:(fun _ decl ->
-        Interpreter.execute_declaration ~can_return:false decl)
+        Interpreter.execute_declaration ~global:true ~can_return:false decl)
   with
   | Interpreter.EvalError (pos, msg) ->
       print_error pos msg;

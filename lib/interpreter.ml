@@ -75,7 +75,7 @@ and eval_expr expr : (value, value ref) Environment.t =
           let obj_env = !o.env in
           let%bind curr_env = get_env in
           let%bind () = set_env obj_env in
-          let%bind () = define ~name ~value ~pos in
+          let%bind () = define ~global:true ~name ~value in
           let%bind () = set_env curr_env in
           return value
       | _, _, Some (Member _) -> error ~pos "Only objects have properties."
@@ -199,12 +199,10 @@ and execute_statement ~can_return t : (return, value ref) Environment.t =
       return Continue
   | Ast.For_stmt { init; cond; step; body } -> (
       let%bind old_env = get_env in
-      let%bind () = open_scope in
       let%bind () = execute_for_init init in
       match%bind execute_loop ~can_return ~cond ~step ~body with
       | Return _ as x -> return x
       | Continue ->
-          let%bind () = close_scope in
           let%bind () = set_env old_env in
           return Continue)
   | Ast.If_stmt { cond; consequent; alternative } -> (
@@ -228,30 +226,29 @@ and execute_statement ~can_return t : (return, value ref) Environment.t =
       execute_loop ~can_return ~cond:(Some cond) ~step:None ~body
   | Ast.Block_stmt ss ->
       let%bind old_env = get_env in
-      let%bind () = open_scope in
       let%bind res =
         foldM ss ~init:Continue ~f:(function
           | Return _ as v -> fun _ -> return v
           | Continue -> fun decl -> execute_declaration ~can_return decl)
       in
-      let%bind () = close_scope in
       let%bind () = set_env old_env in
       return res
 
-and execute_declaration ~can_return t : (return, value ref) Environment.t =
+and execute_declaration ?(global = false) ~can_return t :
+    (return, value ref) Environment.t =
   match t with
   | Ast.Class_decl (c, pos) ->
       let%bind () = execute_class_decl c ~pos in
       return Continue
   | Ast.Func_decl f ->
-      let%bind () = execute_func_decl f in
+      let%bind () = execute_func_decl ~global f in
       return Continue
-  | Ast.Var_decl (v, pos) ->
-      let%bind () = execute_var_decl ~pos v in
+  | Ast.Var_decl (v, _) ->
+      let%bind () = execute_var_decl ~global v in
       return Continue
   | Ast.Stmt_decl s -> execute_statement ~can_return s
 
-and execute_class_decl { name; parent; body } ~pos :
+and execute_class_decl ?(global = false) { name; parent; body } ~pos :
     (unit, value ref) Environment.t =
   let%bind parent, arity =
     match parent with
@@ -262,7 +259,7 @@ and execute_class_decl { name; parent; body } ~pos :
         | _ -> error ~pos "Superclass must be a class.")
   in
   let c = Nil in
-  let%bind () = define ~name ~value:c ~pos in
+  let%bind () = define ~global ~name ~value:c in
   let%bind c_ref = find_ref_exn ~name in
   let%bind env = get_env in
   let super_env =
@@ -289,16 +286,16 @@ and execute_class_decl { name; parent; body } ~pos :
       };
   return ()
 
-and execute_func_decl ({ name; pos; _ } as func) :
+and execute_func_decl ?(global = false) ({ name; _ } as func) :
     (unit, value ref) Environment.t =
   let f = Nil in
-  let%bind () = define ~name ~value:f ~pos in
+  let%bind () = define ~global ~name ~value:f in
   let%bind ref = find_ref_exn ~name in
   let%bind closure_env = get_env in
   ref := Function (create_function func ~env:closure_env);
   return ()
 
-and create_function ?(is_init = false) ~env { name; params; body; pos } =
+and create_function ?(is_init = false) ~env { name; params; body; _ } =
   {
     arity = List.length params;
     string_repr = sprintf "<fn %s>" name;
@@ -306,17 +303,16 @@ and create_function ?(is_init = false) ~env { name; params; body; pos } =
       (fun args ->
         let%bind old_env = get_env in
         let%bind () = set_env env in
-        let%bind () = open_scope in
         let zipped = List.zip_exn params args in
         let%bind _ =
-          mapM zipped ~f:(fun (name, value) -> define ~name ~value ~pos)
+          mapM zipped ~f:(fun (name, value) ->
+              define ~global:false ~name ~value)
         in
         let%bind res =
           foldM body ~init:Continue ~f:(function
             | Return _ as v -> fun _ -> return v
             | Continue -> fun decl -> execute_declaration ~can_return:true decl)
         in
-        let%bind () = close_scope in
         match (res, is_init) with
         | Continue, false ->
             let%bind () = set_env old_env in
@@ -330,10 +326,10 @@ and create_function ?(is_init = false) ~env { name; params; body; pos } =
             return v);
   }
 
-and execute_var_decl ?(pos = Lexing.dummy_pos) { name; init } :
+and execute_var_decl ?(global = false) { name; init } :
     (unit, value ref) Environment.t =
   let%bind value = f_or_nil ~f:eval_expr init in
-  define ~name ~value ~pos
+  define ~global ~name ~value
 
 and execute_for_init init : (unit, value ref) Environment.t =
   match init with

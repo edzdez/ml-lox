@@ -1,0 +1,32 @@
+./for/class_in_body.lox:2:15: Expected <statement> after ')'.
+4
+1
+4
+2
+4
+3
+./for/fun_in_body.lox:2:13: Expected <statement> after ')'.
+i
+i
+0
+-1
+after
+0
+./for/statement_condition.lox:3:18: Expected <expr> or ';' after ';'.
+./for/statement_increment.lox:2:25: Expected <expr> or ')' after ';'.
+./for/statement_initializer.lox:3:7: Expected 'var', <expr>, or ';' after '('.
+1
+2
+3
+0
+1
+2
+done
+0
+1
+0
+1
+2
+0
+1
+./for/var_in_body.lox:2:13: Expected <statement> after ')'.

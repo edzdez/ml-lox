@@ -1,0 +1,13 @@
+./number/decimal_point_at_eof.lox:2:5: Expected <identifier> after '.'.
+./number/leading_dot.lox:2:2: Expected <expr> before binary operator.
+123
+987654
+0
+-0
+123.456
+-0.001
+false
+true
+false
+true
+./number/trailing_dot.lox:2:6: Expected <identifier> after '.'.

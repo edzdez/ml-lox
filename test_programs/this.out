@@ -1,0 +1,8 @@
+Foo
+Outer instance
+Outer instance
+Inner instance
+Foo
+./this/this_at_top_level.lox:1:1: Can't use 'this' outside of a class.
+baz
+./this/this_in_top_level_function.lox:2:3: Can't use 'this' outside of a class.

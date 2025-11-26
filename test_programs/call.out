@@ -1,0 +1,5 @@
+./call/bool.lox:1:1: Can only call functions and classes.
+./call/nil.lox:1:1: Can only call functions and classes.
+./call/num.lox:1:1: Can only call functions and classes.
+./call/object.lox:4:1: Can only call functions and classes.
+./call/string.lox:1:5: Can only call functions and classes.

@@ -1,0 +1,18 @@
+./if/class_in_else.lox:2:27: Expected <statement> after 'else'.
+./if/class_in_then.lox:2:16: Expected <statement> after ')'.
+good
+good
+good
+block
+./if/fun_in_else.lox:2:25: Expected <statement> after 'else'.
+./if/fun_in_then.lox:2:14: Expected <statement> after ')'.
+good
+block
+true
+false
+nil
+true
+0
+empty
+./if/var_in_else.lox:2:25: Expected <statement> after 'else'.
+./if/var_in_then.lox:2:14: Expected <statement> after ')'.
