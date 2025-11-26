@@ -25,7 +25,7 @@ let stringify v =
   | Number n ->
       let s = Float.to_string n in
       if String.is_suffix s ~suffix:"." then String.drop_suffix s 1 else s
-  | Object _ -> assert false
+  | Object o -> !o.base.name ^ " instance"
   | Class { name; _ } -> name
   | Function { string_repr; _ } -> string_repr
   | Nil -> "nil"
@@ -132,7 +132,16 @@ and call ~(callee : value) ~(args : Ast.expr list) ~pos :
   let%bind arg_vals = mapM args ~f:eval_expr in
   let num_args = List.length arg_vals in
   match callee with
-  | Object _ -> assert false
+  | Class ({ arity; _ } as base) ->
+      if num_args <> arity then
+        raise
+          (EvalError
+             ( pos,
+               "Expected " ^ Int.to_string arity ^ " arguments but got "
+               ^ Int.to_string num_args ^ "." ))
+      else
+        let instance = ref { base } in
+        return (Object instance)
   | Function { arity; call; _ } ->
       if num_args <> arity then
         raise
@@ -211,7 +220,7 @@ and execute_class_decl { name; _ } ~pos : (unit, value ref) Environment.t =
   let%bind () = define ~name ~value:c ~pos in
   let%bind ref = find_ref ~name ~pos:Lexing.dummy_pos in
   (* let%bind class_env = get_env in *)
-  ref := Class { name };
+  ref := Class { name; arity = 0 };
   return ()
 
 and execute_func_decl { name; params; body; pos } :

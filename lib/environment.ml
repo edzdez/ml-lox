@@ -32,9 +32,8 @@ end
 include Environment_basic
 module Environment_monad = Monad.Make2 (Environment_basic)
 
-type lox_object
-
-type lox_class = { name : string }
+type lox_object = { base : lox_class }
+and lox_class = { name : string; arity : int }
 
 and lox_function = {
   arity : int;

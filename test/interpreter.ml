@@ -434,3 +434,15 @@ let%expect_test "print functions and classes" =
     DevonshireCream
     <fn foo>
     |}]
+
+let%expect_test "constructs instances" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Bagel {}
+    var b = Bagel();
+    print b;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| Bagel instance |}]
