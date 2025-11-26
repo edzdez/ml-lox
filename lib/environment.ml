@@ -38,6 +38,7 @@ and lox_class = {
   name : string;
   arity : int;
   methods : (string, lox_object ref -> lox_function) Hashtbl.t;
+  parent : lox_class option;
 }
 
 and lox_function = {
@@ -62,8 +63,15 @@ let bind { locals; globals } ~name ~value =
   }
 
 let find_method (o : lox_object ref) ~name =
+  let rec find_method = function
+    | None -> None
+    | Some c -> (
+        match Hashtbl.find c.methods name with
+        | None -> find_method c.parent
+        | Some m -> Some m)
+  in
   let open Option.Let_syntax in
-  let%bind m = Hashtbl.find !o.base.methods name in
+  let%bind m = find_method (Some !o.base) in
   return @@ m o
 
 let find_method_exn ~name ?(pos = Lexing.dummy_pos) (o : lox_object ref) =

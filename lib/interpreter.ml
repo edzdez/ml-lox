@@ -249,8 +249,16 @@ and execute_declaration ~can_return (t : Ast.declaration) :
       return Continue
   | Ast.Stmt_decl s -> execute_statement ~can_return s
 
-and execute_class_decl { name; body; _ } ~pos : (unit, value ref) Environment.t
-    =
+and execute_class_decl { name; parent; body } ~pos :
+    (unit, value ref) Environment.t =
+  let%bind parent =
+    match parent with
+    | None -> return None
+    | Some parent -> (
+        match%bind find_exn ~name:parent ~kind:"class" ~pos with
+        | Class c -> return (Some c)
+        | _ -> raise (EvalError (pos, "Superclass must be a class.")))
+  in
   let c = Nil in
   let%bind () = define ~name ~value:c ~pos in
   let%bind c_ref = find_ref_exn ~name in
@@ -271,6 +279,7 @@ and execute_class_decl { name; body; _ } ~pos : (unit, value ref) Environment.t
         name;
         arity = !arity;
         methods = Hashtbl.of_alist_exn (module String) methods;
+        parent;
       };
   return ()
 

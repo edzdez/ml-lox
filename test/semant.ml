@@ -111,3 +111,8 @@ let%expect_test "reject duplicate declarations of function parameters" =
       let lexbuf = Lexing.from_channel f in
       check_semant lexbuf);
   [%expect {| :1:5: Redefinition of 'arg' in this scope. |}]
+
+let%expect_test "a class can't inherit from itself!" =
+  let lexbuf = Lexing.from_string {| class Oops < Oops {} |} in
+  check_semant lexbuf;
+  [%expect {| :1:2: A class can't inherit from itself. |}]

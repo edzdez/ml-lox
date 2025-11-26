@@ -6,12 +6,17 @@ exception SemantError of Ast.position * string
 let rec check_declaration ?(is_init = false) ?(in_class = false)
     ?(curr_scope = None) (t : Ast.declaration) =
   match t with
-  | Ast.Class_decl (t, _) -> check_class t
+  | Ast.Class_decl (t, pos) -> check_class ~pos t
   | Ast.Func_decl t -> check_function ~is_init ~in_class t
   | Ast.Var_decl (t, pos) -> check_var ~curr_scope ~pos t
   | Ast.Stmt_decl t -> check_statement ~is_init ~in_class t
 
-and check_class ({ body; _ } : Ast.class_decl) =
+and check_class ~pos ({ name; parent; body } : Ast.class_decl) =
+  (match parent with
+  | None -> ()
+  | Some parent ->
+      if String.(name = parent) then
+        raise (SemantError (pos, "A class can't inherit from itself.")));
   List.iter body ~f:(fun ({ name; _ } as f) ->
       check_function ~is_init:String.(name = "init") ~in_class:true f)
 

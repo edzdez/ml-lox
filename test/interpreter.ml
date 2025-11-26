@@ -557,3 +557,43 @@ let%expect_test "empty return in initializer return 'this'" =
   in
   interpret lexbuf;
   [%expect {| Foo instance |}]
+
+let%expect_test "runtime error when inheriting from a class that doesn't exist"
+    =
+  let lexbuf =
+    Lexing.from_string {|
+    class Subclass < DoesntExist {}
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| :2:5: Undefined class 'DoesntExist'. |}]
+
+let%expect_test "runtime error when inheriting from a non-class" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    var NotAClass = "I am totally not a class";
+
+    class Subclass < NotAClass {}
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| :4:5: Superclass must be a class. |}]
+
+let%expect_test "inherits methods" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      class Doughnut {
+        cook() {
+          print "Fry until golden brown.";
+        }
+      }
+
+      class BostonCream < Doughnut {}
+
+      BostonCream().cook();
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| Fry until golden brown. |}]
