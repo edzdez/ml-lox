@@ -446,3 +446,15 @@ let%expect_test "constructs instances" =
   in
   interpret lexbuf;
   [%expect {| Bagel instance |}]
+
+let%expect_test "runtime error when accessing undefined field" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+    class Bagel {}
+    var b = Bagel();
+    print b.bar;
+    |}
+  in
+  interpret lexbuf;
+  [%expect {| :4:11: Undefined property 'bar'. |}]

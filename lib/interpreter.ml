@@ -38,7 +38,7 @@ let rec eval_atom_expr (expr : Ast.atom_expr) : (value, value ref) Environment.t
   | Ast.This_expr -> assert false
   | Ast.Number_expr n -> return @@ Number n
   | Ast.String_expr s -> return @@ String s
-  | Ast.Var_expr (name, pos) -> find ~name ~pos
+  | Ast.Var_expr (name, pos) -> find ~name ~kind:"variable" ~pos
   | Ast.Super_expr (_e, _) -> assert false
   | Ast.Expr_expr (e, _) -> eval_expr e
 
@@ -124,7 +124,16 @@ and eval_expr (expr : Ast.expr) : (value, value ref) Environment.t =
   | Ast.Call_expr ({ primary; calls }, pos) ->
       let%bind callee = eval_atom_expr primary in
       foldM calls ~init:callee ~f:(fun callee -> function
-        | Member _ -> assert false
+        | Member name -> (
+            match callee with
+            | Object o ->
+                let obj_env = !o.env in
+                let%bind curr_env = get_env in
+                let%bind () = set_env obj_env in
+                let%bind prop = find ~name ~kind:"property" ~pos in
+                let%bind () = set_env curr_env in
+                return prop
+            | _ -> raise (EvalError (pos, "Only objects have properties.")))
         | Call args -> call ~callee ~args ~pos)
 
 and call ~(callee : value) ~(args : Ast.expr list) ~pos :
@@ -140,7 +149,8 @@ and call ~(callee : value) ~(args : Ast.expr list) ~pos :
                "Expected " ^ Int.to_string arity ^ " arguments but got "
                ^ Int.to_string num_args ^ "." ))
       else
-        let instance = ref { base } in
+        let%bind env = class_env in
+        let instance = ref { base; env } in
         return (Object instance)
   | Function { arity; call; _ } ->
       if num_args <> arity then

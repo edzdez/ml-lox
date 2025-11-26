@@ -32,7 +32,7 @@ end
 include Environment_basic
 module Environment_monad = Monad.Make2 (Environment_basic)
 
-type lox_object = { base : lox_class }
+type lox_object = { base : lox_class; env : value ref env }
 and lox_class = { name : string; arity : int }
 
 and lox_function = {
@@ -63,22 +63,22 @@ let close_scope : (unit, value ref) t =
   | [] -> assert false
   | _ :: tl -> ((), { locals = tl; globals })
 
-let find_ref ~name ~pos : (value ref, value ref) t =
+let find_ref ~name ?(kind = "variable") ~pos : (value ref, value ref) t =
  fun ({ locals; globals } as env) ->
   let rec aux locals =
     match locals with
     | [] -> (
         match Hashtbl.find globals name with
-        | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
+        | None -> raise (EnvError (pos, sprintf "Undefined %s '%s'." kind name))
         | Some v -> (v, env))
     | hd :: tl -> (
         match Map.find hd name with None -> aux tl | Some v -> (v, env))
   in
   aux locals
 
-let find ~name ~pos : (value, value ref) t =
+let find ~name ?(kind = "variable") ~pos : (value, value ref) t =
   let open Environment_monad.Let_syntax in
-  let%bind ref = find_ref ~name ~pos in
+  let%bind ref = find_ref ~name ~kind ~pos in
   return !ref
 
 let define ~name ~value ~pos : (unit, value ref) t =
@@ -97,13 +97,13 @@ let define ~name ~value ~pos : (unit, value ref) t =
       in
       ((), { locals = hd' :: tl; globals })
 
-let assign ~name ~value ~pos : (value, value ref) t =
+let assign ~name ~value ?(kind = "variable") ~pos : (value, value ref) t =
  fun ({ locals; globals } as env) ->
   let rec aux locals =
     match locals with
     | [] -> (
         match Hashtbl.find globals name with
-        | None -> raise (EnvError (pos, "Undefined variable '" ^ name ^ "'."))
+        | None -> raise (EnvError (pos, sprintf "Undefined %s '%s'." kind name))
         | Some v ->
             v := value;
             (value, env))
@@ -121,10 +121,21 @@ let assign_at ~lvalue:({ primary; calls } : Ast.call_expr) ~value :
   match calls with
   | [] -> (
       match primary with
-      | Var_expr (name, pos) -> assign ~name ~pos ~value
+      | Var_expr (name, pos) -> assign ~name ~value ~kind:"variable" ~pos
       (* semant should rule this case out *)
       | _ -> assert false)
   | _ -> assert false
+
+let class_env : (value ref env, value ref) t =
+  let open Environment_monad.Let_syntax in
+  let%bind old_env = get_env in
+  let%bind () =
+    set_env { locals = []; globals = Hashtbl.create (module String) }
+  in
+  let%bind () = open_scope in
+  let%bind class_env = get_env in
+  let%bind () = set_env old_env in
+  return class_env
 
 let foldM (xs : 'a list) ~(init : 'b) ~(f : 'b -> 'a -> ('b, value ref) t) :
     ('b, value ref) t =
