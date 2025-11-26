@@ -471,3 +471,19 @@ let%expect_test "supports setting properties" =
   in
   interpret lexbuf;
   [%expect {| Jane |}]
+
+let%expect_test "supports simple methods" =
+  (let lexbuf =
+     Lexing.from_string
+       {|
+       class Bacon {
+         eat() {
+           print "Crunch crunch crunch!";
+         }
+       }
+
+       Bacon().eat();
+       |}
+   in
+   interpret lexbuf);
+  [%expect {| Crunch crunch crunch! |}]

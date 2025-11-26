@@ -33,7 +33,12 @@ include Environment_basic
 module Environment_monad = Monad.Make2 (Environment_basic)
 
 type lox_object = { base : lox_class; env : value ref env }
-and lox_class = { name : string; arity : int }
+
+and lox_class = {
+  name : string;
+  arity : int;
+  methods : (string, lox_function) Hashtbl.t;
+}
 
 and lox_function = {
   arity : int;
@@ -49,6 +54,11 @@ and value =
   | Class of lox_class
   | Function of lox_function
   | Nil
+
+let find_method_exn { methods; _ } ~name ~pos =
+  match Hashtbl.find methods name with
+  | Some m -> m
+  | None -> raise (EnvError (pos, sprintf "Undefined property '%s'." name))
 
 let get_env : (value ref env, value ref) t = fun env -> (env, env)
 let set_env env : (unit, value ref) t = fun _ -> ((), env)
@@ -82,22 +92,29 @@ let close_scope : (unit, value ref) t =
   | [] -> assert false
   | _ :: tl -> ((), { locals = tl; globals })
 
-let find_ref ~name ?(kind = "variable") ~pos : (value ref, value ref) t =
+let find_ref ~name : (value ref option, value ref) t =
  fun ({ locals; globals } as env) ->
   let rec aux locals =
     match locals with
-    | [] -> (
-        match Hashtbl.find globals name with
-        | None -> raise (EnvError (pos, sprintf "Undefined %s '%s'." kind name))
-        | Some v -> (v, env))
+    | [] -> (Hashtbl.find globals name, env)
     | hd :: tl -> (
-        match Map.find hd name with None -> aux tl | Some v -> (v, env))
+        match Map.find hd name with None -> aux tl | v -> (v, env))
   in
   aux locals
 
-let find ~name ?(kind = "variable") ~pos : (value, value ref) t =
+let find_ref_exn ~name ?(kind = "variable") ~pos : (value ref, value ref) t =
   let open Environment_monad.Let_syntax in
-  let%bind ref = find_ref ~name ~kind ~pos in
+  match%bind find_ref ~name with
+  | None -> raise (EnvError (pos, sprintf "Undefined %s '%s'." kind name))
+  | Some v -> return v
+
+let find ~name : (value option, value ref) t =
+  let open Environment_monad in
+  find_ref ~name >>| Option.map ~f:( ! )
+
+let find_exn ~name ?(kind = "variable") ~pos : (value, value ref) t =
+  let open Environment_monad.Let_syntax in
+  let%bind ref = find_ref_exn ~name ~kind ~pos in
   return !ref
 
 let define ~name ~value ~pos : (unit, value ref) t =
@@ -112,7 +129,8 @@ let define ~name ~value ~pos : (unit, value ref) t =
           | None -> ref value
           | Some _ ->
               raise
-                (EnvError (pos, "Redefinition of '" ^ name ^ "' in this scope.")))
+                (EnvError
+                   (pos, sprintf "Redefinition of '%s' in this scope." name)))
       in
       ((), { locals = hd' :: tl; globals })
 

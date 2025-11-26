@@ -25,7 +25,7 @@ let stringify v =
   | Number n ->
       let s = Float.to_string n in
       if String.is_suffix s ~suffix:"." then String.drop_suffix s 1 else s
-  | Object o -> !o.base.name ^ " instance"
+  | Object o -> sprintf "%s instance" !o.base.name
   | Class { name; _ } -> name
   | Function { string_repr; _ } -> string_repr
   | Nil -> "nil"
@@ -38,7 +38,7 @@ let rec eval_atom_expr (expr : Ast.atom_expr) : (value, value ref) Environment.t
   | Ast.This_expr -> assert false
   | Ast.Number_expr n -> return @@ Number n
   | Ast.String_expr s -> return @@ String s
-  | Ast.Var_expr (name, pos) -> find ~name ~kind:"variable" ~pos
+  | Ast.Var_expr (name, pos) -> find_exn ~name ~kind:"variable" ~pos
   | Ast.Super_expr (_e, _) -> assert false
   | Ast.Expr_expr (e, _) -> eval_expr e
 
@@ -148,7 +148,12 @@ and eval_expr (expr : Ast.expr) : (value, value ref) Environment.t =
                 let obj_env = !o.env in
                 let%bind curr_env = get_env in
                 let%bind () = set_env obj_env in
-                let%bind prop = find ~name ~kind:"property" ~pos in
+                let%bind prop =
+                  match%bind find ~name with
+                  | Some prop -> return prop
+                  | None ->
+                      return (Function (find_method_exn !o.base ~name ~pos))
+                in
                 let%bind () = set_env curr_env in
                 return prop
             | _ -> raise (EvalError (pos, "Only objects have properties.")))
@@ -163,9 +168,7 @@ and call ~(callee : value) ~(args : Ast.expr list) ~pos :
       if num_args <> arity then
         raise
           (EvalError
-             ( pos,
-               "Expected " ^ Int.to_string arity ^ " arguments but got "
-               ^ Int.to_string num_args ^ "." ))
+             (pos, sprintf "Expected %d arguments but got %d." arity num_args))
       else
         let%bind env = class_env in
         let instance = ref { base; env } in
@@ -174,9 +177,7 @@ and call ~(callee : value) ~(args : Ast.expr list) ~pos :
       if num_args <> arity then
         raise
           (EvalError
-             ( pos,
-               "Expected " ^ Int.to_string arity ^ " arguments but got "
-               ^ Int.to_string num_args ^ "." ))
+             (pos, sprintf "Expected %d arguments but got %d." arity num_args))
       else call arg_vals
   | _ -> raise (EvalError (pos, "Can only call functions and classes."))
 
@@ -243,45 +244,55 @@ and execute_declaration ~can_return (t : Ast.declaration) :
       return Continue
   | Ast.Stmt_decl s -> execute_statement ~can_return s
 
-and execute_class_decl { name; _ } ~pos : (unit, value ref) Environment.t =
+and execute_class_decl { name; body; _ } ~pos : (unit, value ref) Environment.t
+    =
   let c = Nil in
   let%bind () = define ~name ~value:c ~pos in
-  let%bind ref = find_ref ~name ~pos:Lexing.dummy_pos in
-  (* let%bind class_env = get_env in *)
-  ref := Class { name; arity = 0 };
+  let%bind ref = find_ref_exn ~name ~pos:Lexing.dummy_pos in
+  let%bind env = get_env in
+  let methods =
+    List.map body ~f:(fun ({ name; _ } as f) -> (name, create_function f ~env))
+  in
+  ref :=
+    Class
+      {
+        name;
+        arity = 0;
+        methods = Hashtbl.of_alist_exn (module String) methods;
+      };
   return ()
 
-and execute_func_decl { name; params; body; pos } :
+and execute_func_decl ({ name; pos; _ } as func) :
     (unit, value ref) Environment.t =
   let f = Nil in
   let%bind () = define ~name ~value:f ~pos in
-  let%bind ref = find_ref ~name ~pos:Lexing.dummy_pos in
+  let%bind ref = find_ref_exn ~name ~pos:Lexing.dummy_pos in
   let%bind closure_env = get_env in
-  ref :=
-    Function
-      {
-        arity = List.length params;
-        string_repr = "<fn " ^ name ^ ">";
-        call =
-          (fun args ->
-            let%bind old_env = get_env in
-            let%bind () = set_env closure_env in
-            let%bind () = open_scope in
-            let zipped = List.zip_exn params args in
-            let%bind _ =
-              mapM zipped ~f:(fun (name, value) -> define ~name ~value ~pos)
-            in
-            let%bind res =
-              foldM body ~init:Continue ~f:(function
-                | Return _ as v -> fun _ -> return v
-                | Continue ->
-                    fun decl -> execute_declaration ~can_return:true decl)
-            in
-            let%bind () = close_scope in
-            let%bind _ = set_env old_env in
-            match res with Continue -> return Nil | Return v -> return v);
-      };
+  ref := Function (create_function func ~env:closure_env);
   return ()
+
+and create_function { name; params; body; pos } ~env =
+  {
+    arity = List.length params;
+    string_repr = sprintf "<fn %s>" name;
+    call =
+      (fun args ->
+        let%bind old_env = get_env in
+        let%bind () = set_env env in
+        let%bind () = open_scope in
+        let zipped = List.zip_exn params args in
+        let%bind _ =
+          mapM zipped ~f:(fun (name, value) -> define ~name ~value ~pos)
+        in
+        let%bind res =
+          foldM body ~init:Continue ~f:(function
+            | Return _ as v -> fun _ -> return v
+            | Continue -> fun decl -> execute_declaration ~can_return:true decl)
+        in
+        let%bind () = close_scope in
+        let%bind _ = set_env old_env in
+        match res with Continue -> return Nil | Return v -> return v);
+  }
 
 and execute_var_decl ~pos { name; init } : (unit, value ref) Environment.t =
   let%bind value =
