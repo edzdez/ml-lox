@@ -4,12 +4,12 @@ exception SemantError of Ast.position * string
 
 (* We really, only check that assignment is to valid lvalues... *)
 let rec check_declaration ?(is_init = false) ?(in_class = false)
-    ?(curr_scope = None) (t : Ast.declaration) =
+    ?(has_parent = false) ?(curr_scope = None) (t : Ast.declaration) =
   match t with
   | Ast.Class_decl (t, pos) -> check_class ~pos t
   | Ast.Func_decl t -> check_function ~is_init ~in_class t
   | Ast.Var_decl (t, pos) -> check_var ~curr_scope ~pos t
-  | Ast.Stmt_decl t -> check_statement ~is_init ~in_class t
+  | Ast.Stmt_decl t -> check_statement ~is_init ~in_class ~has_parent t
 
 and check_class ~pos ({ name; parent; body } : Ast.class_decl) =
   (match parent with
@@ -18,9 +18,11 @@ and check_class ~pos ({ name; parent; body } : Ast.class_decl) =
       if String.(name = parent) then
         raise (SemantError (pos, "A class can't inherit from itself.")));
   List.iter body ~f:(fun ({ name; _ } as f) ->
-      check_function ~is_init:String.(name = "init") ~in_class:true f)
+      check_function
+        ~is_init:String.(name = "init")
+        ~in_class:true ~has_parent:(Option.is_some parent) f)
 
-and check_function ~is_init ?(in_class = false)
+and check_function ~is_init ?(in_class = false) ?(has_parent = false)
     ({ body; params; pos; _ } : Ast.func) =
   if List.length params >= 255 then
     raise (SemantError (pos, "Can't have more than 255 parameters."))
@@ -37,7 +39,8 @@ and check_function ~is_init ?(in_class = false)
           acc)
     in
     let curr_scope = Some scope in
-    List.iter body ~f:(check_declaration ~is_init ~in_class ~curr_scope)
+    List.iter body
+      ~f:(check_declaration ~is_init ~in_class ~has_parent ~curr_scope)
 
 and check_var ~curr_scope ~pos ({ name; init } : Ast.var_decl) =
   (match curr_scope with
@@ -49,9 +52,9 @@ and check_var ~curr_scope ~pos ({ name; init } : Ast.var_decl) =
       else Hash_set.add scope name);
   match init with None -> () | Some expr -> check_expr expr
 
-and check_statement ~is_init ?(in_class = false) s =
+and check_statement ~is_init ?(in_class = false) ?(has_parent = false) s =
   match s with
-  | Ast.Expr_stmt e -> check_expr ~in_class e
+  | Ast.Expr_stmt e -> check_expr ~in_class ~has_parent e
   | Ast.For_stmt { init; cond; step; body } ->
       (match init with
       | None -> ()
@@ -82,7 +85,7 @@ and check_statement ~is_init ?(in_class = false) s =
       let curr_scope = Some (Hash_set.create (module String)) in
       List.iter decls ~f:(check_declaration ~curr_scope)
 
-and check_expr ?(in_class = false) e =
+and check_expr ?(in_class = false) ?(has_parent = false) e =
   match e with
   | Ast.Assign_expr ({ lhs; rhs }, pos) -> (
       check_expr rhs;
@@ -135,15 +138,21 @@ and check_expr ?(in_class = false) e =
   | Ast.Neg_expr (e, _) -> check_expr e
   | Ast.Minus_expr (e, _) -> check_expr e
   | Ast.Call_expr ({ primary; calls }, loc) ->
-      check_atom_expr ~in_class primary;
+      check_atom_expr ~in_class ~has_parent primary;
       List.iter calls ~f:(check_call_t ~loc)
 
-and check_atom_expr ?(in_class = false) e =
+and check_atom_expr ?(in_class = false) ?(has_parent = false) e =
   match e with
   | Ast.Expr_expr (e, _) -> check_expr e
   | This_expr pos ->
       if not in_class then
         raise (SemantError (pos, "Can't use 'this' outside of a class."))
+  | Super_expr (_, pos) ->
+      if not in_class then
+        raise (SemantError (pos, "Can't use 'super' outside of a class."))
+      else if not has_parent then
+        raise
+          (SemantError (pos, "Can't use 'super' in a class with no superclass."))
   | _ -> ()
 
 and check_call_t ~loc t =

@@ -116,3 +116,22 @@ let%expect_test "a class can't inherit from itself!" =
   let lexbuf = Lexing.from_string {| class Oops < Oops {} |} in
   check_semant lexbuf;
   [%expect {| :1:2: A class can't inherit from itself. |}]
+
+let%expect_test "reject super outside of a class" =
+  let lexbuf = Lexing.from_string {| super.foo; |} in
+  check_semant lexbuf;
+  [%expect {| :1:2: Can't use 'super' outside of a class. |}]
+
+let%expect_test "can't use super in a class with no parent" =
+  let lexbuf =
+    Lexing.from_string
+      {|
+      class Foo {
+        foo() {
+          super.bar();
+        }
+      }
+      |}
+  in
+  check_semant lexbuf;
+  [%expect {| :4:11: Can't use 'super' in a class with no superclass. |}]
