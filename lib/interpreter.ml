@@ -30,8 +30,7 @@ let stringify v =
   | Function { string_repr; _ } -> string_repr
   | Nil -> "nil"
 
-let rec eval_atom_expr (expr : Ast.atom_expr) : (value, value ref) Environment.t
-    =
+let rec eval_atom_expr expr : (value, value ref) Environment.t =
   match expr with
   | Ast.Bool_expr b -> return @@ Bool b
   | Ast.Nil_expr -> return @@ Nil
@@ -45,7 +44,7 @@ let rec eval_atom_expr (expr : Ast.atom_expr) : (value, value ref) Environment.t
   | Ast.Super_expr (_e, _) -> assert false
   | Ast.Expr_expr (e, _) -> eval_expr e
 
-and eval_expr (expr : Ast.expr) : (value, value ref) Environment.t =
+and eval_expr expr : (value, value ref) Environment.t =
   match expr with
   | Ast.Assign_expr ({ lhs = { primary; calls }; rhs }, pos) -> (
       let calls, property =
@@ -161,8 +160,7 @@ and eval_expr (expr : Ast.expr) : (value, value ref) Environment.t =
             | _ -> raise (EvalError (pos, "Only objects have properties.")))
         | Call args -> call ~callee ~args ~pos)
 
-and call ~(callee : value) ~(args : Ast.expr list) ~pos :
-    (value, value ref) Environment.t =
+and call ~callee ~args ~pos : (value, value ref) Environment.t =
   let%bind arg_vals = mapM args ~f:eval_expr in
   let num_args = List.length arg_vals in
   match callee with
@@ -255,7 +253,7 @@ and execute_class_decl { name; body; _ } ~pos : (unit, value ref) Environment.t
     =
   let c = Nil in
   let%bind () = define ~name ~value:c ~pos in
-  let%bind c_ref = find_ref_exn ~name ~pos:Lexing.dummy_pos in
+  let%bind c_ref = find_ref_exn ~name in
   let%bind env = get_env in
   let arity = ref 0 in
   let methods =
@@ -280,7 +278,7 @@ and execute_func_decl ({ name; pos; _ } as func) :
     (unit, value ref) Environment.t =
   let f = Nil in
   let%bind () = define ~name ~value:f ~pos in
-  let%bind ref = find_ref_exn ~name ~pos:Lexing.dummy_pos in
+  let%bind ref = find_ref_exn ~name in
   let%bind closure_env = get_env in
   ref := Function (create_function func ~env:closure_env);
   return ()
@@ -309,9 +307,7 @@ and create_function ?(is_init = false) ~env { name; params; body; pos } =
             let%bind () = set_env old_env in
             return Nil
         | _, true ->
-            let%bind this =
-              find_exn ~name:"this" ~kind:"unreachable" ~pos:Lexing.dummy_pos
-            in
+            let%bind this = find_exn ~name:"this" ~kind:"unreachable" in
             let%bind () = set_env old_env in
             return this
         | Return v, _ ->
@@ -319,7 +315,8 @@ and create_function ?(is_init = false) ~env { name; params; body; pos } =
             return v);
   }
 
-and execute_var_decl ~pos { name; init } : (unit, value ref) Environment.t =
+and execute_var_decl ?(pos = Lexing.dummy_pos) { name; init } :
+    (unit, value ref) Environment.t =
   let%bind value =
     match init with None -> return Nil | Some e -> eval_expr e
   in
@@ -328,11 +325,11 @@ and execute_var_decl ~pos { name; init } : (unit, value ref) Environment.t =
 and execute_for_init init : (unit, value ref) Environment.t =
   match init with
   | None -> return ()
-  | Decl decl -> execute_var_decl ~pos:Lexing.dummy_pos decl
+  | Decl decl -> execute_var_decl decl
   | Expr expr -> eval_expr expr >>| ignore
 
-and execute_loop ~can_return ?(cond : Ast.expr option = None)
-    ?(step : Ast.expr option = None) ~body : (return, value ref) Environment.t =
+and execute_loop ~can_return ?(cond = None) ?(step = None) ~body :
+    (return, value ref) Environment.t =
   let%bind cond_v =
     match cond with None -> return @@ Bool true | Some expr -> eval_expr expr
   in

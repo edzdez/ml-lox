@@ -66,7 +66,7 @@ let find_method (o : lox_object ref) ~name =
   let%bind m = Hashtbl.find !o.base.methods name in
   return @@ m o
 
-let find_method_exn (o : lox_object ref) ~name ~pos =
+let find_method_exn ~name ?(pos = Lexing.dummy_pos) (o : lox_object ref) =
   match find_method o ~name with
   | Some m -> m
   | None -> raise (EnvError (pos, sprintf "Undefined property '%s'." name))
@@ -113,7 +113,8 @@ let find_ref ~name : (value ref option, value ref) t =
   in
   aux locals
 
-let find_ref_exn ~name ?(kind = "variable") ~pos : (value ref, value ref) t =
+let find_ref_exn ~name ?(kind = "variable") ?(pos = Lexing.dummy_pos) :
+    (value ref, value ref) t =
   let open Environment_monad.Let_syntax in
   match%bind find_ref ~name with
   | None -> raise (EnvError (pos, sprintf "Undefined %s '%s'." kind name))
@@ -123,12 +124,13 @@ let find ~name : (value option, value ref) t =
   let open Environment_monad in
   find_ref ~name >>| Option.map ~f:( ! )
 
-let find_exn ~name ?(kind = "variable") ~pos : (value, value ref) t =
+let find_exn ~name ?(kind = "variable") ?(pos = Lexing.dummy_pos) :
+    (value, value ref) t =
   let open Environment_monad.Let_syntax in
   let%bind ref = find_ref_exn ~name ~kind ~pos in
   return !ref
 
-let define ~name ~value ~pos : (unit, value ref) t =
+let define ~name ~value ?(pos = Lexing.dummy_pos) : (unit, value ref) t =
  fun ({ locals; globals } as env) ->
   match locals with
   | [] ->
@@ -145,7 +147,8 @@ let define ~name ~value ~pos : (unit, value ref) t =
       in
       ((), { locals = hd' :: tl; globals })
 
-let assign ~name ~value ?(kind = "variable") ~pos : (value, value ref) t =
+let assign ~name ~value ?(kind = "variable") ?(pos = Lexing.dummy_pos) :
+    (value, value ref) t =
  fun ({ locals; globals } as env) ->
   let rec aux locals =
     match locals with
